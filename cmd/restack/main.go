@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/abhinav/restack"
 	"go.uber.org/multierr"
@@ -32,8 +34,11 @@ func run() error {
 			return fmt.Errorf("failed to find path to restack executable: %v", err)
 		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
 		git := restack.DefaultGit
-		if err := git.SetGlobalConfig("sequence.editor", restackPath+" edit"); err != nil {
+		if err := git.SetGlobalConfig(ctx, "sequence.editor", restackPath+" edit"); err != nil {
 			return fmt.Errorf("failed to set sequence editor: %v", err)
 		}
 
@@ -73,9 +78,12 @@ func edit(args []string) error {
 		return fmt.Errorf("failed to create file %q: %v", outFilePath, err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
 	// TODO: Guess remote name
 	r := restack.Restacker{RemoteName: "origin", FS: fs}
-	if err := r.Run(outFile, inFile); err != nil {
+	if err := r.Run(ctx, outFile, inFile); err != nil {
 		outFile.Close()
 		inFile.Close()
 		return err

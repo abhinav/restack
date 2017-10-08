@@ -2,6 +2,7 @@ package restack
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -26,7 +27,7 @@ const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
 
 // Run reads rebase instructions from src and writes them to dst based on the
 // Restacker configuration.
-func (r Restacker) Run(dst io.Writer, src io.Reader) error {
+func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error {
 	if r.FS == nil {
 		r.FS = DefaultFilesystem
 	}
@@ -35,7 +36,7 @@ func (r Restacker) Run(dst io.Writer, src io.Reader) error {
 		r.Git = DefaultGit
 	}
 
-	knownBranches, err := r.Git.ListHeads()
+	knownBranches, err := r.Git.ListHeads(ctx)
 	if err != nil {
 		return err
 	}

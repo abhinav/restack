@@ -2,6 +2,7 @@ package restack
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
@@ -17,10 +18,10 @@ type Git interface {
 	// Equivalent to,
 	//
 	//   git config --global $name $value
-	SetGlobalConfig(name, value string) error
+	SetGlobalConfig(ctx context.Context, name, value string) error
 
 	// Returns a mapping from abbreviated hash to list of refs at that hash.
-	ListHeads() (map[string][]string, error)
+	ListHeads(ctx context.Context) (map[string][]string, error)
 }
 
 // DefaultGit is an instance of Git that operates on the git repository in the
@@ -29,15 +30,14 @@ var DefaultGit Git = defaultGit{}
 
 type defaultGit struct{}
 
-func (defaultGit) SetGlobalConfig(name, value string) (err error) {
-	return gitRun("config", "--global", name, value)
+func (defaultGit) SetGlobalConfig(ctx context.Context, name, value string) (err error) {
+	return gitRun(ctx, "config", "--global", name, value)
 }
 
-func (defaultGit) ListHeads() (map[string][]string, error) {
-	cmd := exec.Command("git", "show-ref", "--heads", "--abbrev")
+func (defaultGit) ListHeads(ctx context.Context) (map[string][]string, error) {
+	cmd := exec.CommandContext(ctx, "git", "show-ref", "--heads", "--abbrev")
 	out, err := cmd.StdoutPipe()
 
-	// TODO: Use context
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("failed to run git show-ref: %v", err)
 	}
@@ -48,8 +48,8 @@ func (defaultGit) ListHeads() (map[string][]string, error) {
 	return parseGitShowRef(out)
 }
 
-func gitRun(args ...string) error {
-	if err := exec.Command("git", args...).Run(); err != nil {
+func gitRun(ctx context.Context, args ...string) error {
+	if err := exec.CommandContext(ctx, "git", args...).Run(); err != nil {
 		return fmt.Errorf("failed to run git with %q: %v", args, err)
 	}
 	return nil
