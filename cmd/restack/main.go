@@ -25,19 +25,12 @@ func run() error {
 
 	switch os.Args[1] {
 	case "install":
-		// TODO: should be idempotent
 		// TODO: use current binary location instead of assuming it's on $PATH
 		// TODO: store current core.editor value in command as an argument
 
 		git := restack.DefaultGit
 		if err := git.SetGlobalConfig("sequence.editor", "restack edit"); err != nil {
 			return fmt.Errorf("failed to set sequence editor: %v", err)
-		}
-
-		// TODO(abg): This may be unnecessary if we can just use `git
-		// show-ref`.
-		if err := git.SetGlobalConfig("rebase.instructionFormat", "%s%d"); err != nil {
-			return fmt.Errorf("failed to set rebase instruction format: %v", err)
 		}
 
 		log.Print("Successfully installed restack.")

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 )
 
@@ -18,14 +17,10 @@ type Restacker struct {
 	// FS controls how Restacker accesses the filesystem. Defaults to
 	// DefaultFilesystem.
 	FS FS
-}
 
-// Matches the list of refs at the end of the "pick" instruction.
-//
-//   pick 12345678 Do stuff (origin/foo, foo)
-//
-// This requires that the rebase.instructionFormat ends with "%d"
-var _refList = regexp.MustCompile(`\(([^)]+)\)$`)
+	// Controls access to Git commands.
+	Git Git
+}
 
 const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
 
@@ -34,6 +29,15 @@ const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
 func (r Restacker) Run(dst io.Writer, src io.Reader) error {
 	if r.FS == nil {
 		r.FS = DefaultFilesystem
+	}
+
+	if r.Git == nil {
+		r.Git = DefaultGit
+	}
+
+	knownBranches, err := r.Git.ListHeads()
+	if err != nil {
+		return err
 	}
 
 	var branches []string
@@ -54,10 +58,6 @@ func (r Restacker) Run(dst io.Writer, src io.Reader) error {
 					return err
 				}
 			}
-
-			if _, err := fmt.Fprintln(dst); err != nil {
-				return err
-			}
 		}
 
 		// Most lines go in as-is.
@@ -69,24 +69,23 @@ func (r Restacker) Run(dst io.Writer, src io.Reader) error {
 			continue
 		}
 
-		// TODO(abg): An alternative method we could use here is to parse the
-		// hash and match against 'git show-ref --heads --abbrev'. This will
-		// allow us to leave the git config alone.
-
-		matches := _refList.FindStringSubmatch(line)
-		if len(matches) < 2 {
+		// pick [hash] [msg]
+		parts := strings.SplitN(line, " ", 3)
+		if len(parts) != 3 {
 			continue
 		}
 
-		refs := strings.Split(matches[1], ",")
+		refs, ok := knownBranches[parts[1]]
+		if !ok {
+			continue
+		}
+
 		for _, ref := range refs {
-			ref = strings.TrimSpace(ref)
-			if r.FS.FileExists(fmt.Sprintf(".git/refs/heads/%v", ref)) {
-				if _, err := fmt.Fprintf(dst, "exec git branch -f %v\n", ref); err != nil {
-					return err
-				}
-				branches = append(branches, ref)
+			ref = strings.TrimPrefix(ref, "refs/heads/")
+			if _, err := fmt.Fprintf(dst, "exec git branch -f %v\n", ref); err != nil {
+				return err
 			}
+			branches = append(branches, ref)
 		}
 	}
 
