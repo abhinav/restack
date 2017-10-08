@@ -25,11 +25,15 @@ func run() error {
 
 	switch os.Args[1] {
 	case "install":
-		// TODO: use current binary location instead of assuming it's on $PATH
 		// TODO: store current core.editor value in command as an argument
 
+		restackPath, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("failed to find path to restack executable: %v", err)
+		}
+
 		git := restack.DefaultGit
-		if err := git.SetGlobalConfig("sequence.editor", "restack edit"); err != nil {
+		if err := git.SetGlobalConfig("sequence.editor", restackPath+" edit"); err != nil {
 			return fmt.Errorf("failed to set sequence editor: %v", err)
 		}
 
