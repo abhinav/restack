@@ -1,6 +1,8 @@
-hash: da7749a9d3b5234bfbc323c237558900340342f5f9eb6bba4584fb1a14d88277
-updated: 2017-10-01T16:28:24.846448911-07:00
+hash: b29b1d149b1eba36c18a3faa03e959254d9355f72fc54d5d5eb4ee59c506742f
+updated: 2017-10-08T18:05:29.206629262-07:00
 imports:
+- name: github.com/jessevdk/go-flags
+  version: 96dc06278ce32a0e9d957d590bb987c81ee66407
 - name: go.uber.org/atomic
   version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
 - name: go.uber.org/multierr

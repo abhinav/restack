@@ -1,16 +1,9 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"time"
 
-	"github.com/abhinav/restack"
-	"go.uber.org/multierr"
+	flags "github.com/jessevdk/go-flags"
 )
 
 func main() {
@@ -21,90 +14,28 @@ func main() {
 }
 
 func run() error {
-	if len(os.Args) < 2 {
-		return fmt.Errorf("USAGE: %v COMMAND", os.Args[0])
-	}
+	// No global options at this time.
+	var opts struct{}
 
-	switch os.Args[1] {
-	case "install":
-		// TODO: store current core.editor value in command as an argument
+	parser := flags.NewParser(&opts, flags.HelpFlag)
 
-		restackPath, err := os.Executable()
-		if err != nil {
-			return fmt.Errorf("failed to find path to restack executable: %v", err)
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		git := restack.DefaultGit
-		if err := git.SetGlobalConfig(ctx, "sequence.editor", restackPath+" edit"); err != nil {
-			return fmt.Errorf("failed to set sequence editor: %v", err)
-		}
-
-		log.Print("Successfully installed restack.")
-		return nil
-	case "edit":
-		return edit(os.Args[2:])
-	default:
-		return fmt.Errorf("unknown command %q", os.Args[1])
-	}
-}
-
-func edit(args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("USAGE: %v edit [OPTIONS] FILE", os.Args[0])
-	}
-
-	fs := restack.DefaultFilesystem
-
-	inFilePath := args[0]
-	inFile, err := fs.ReadFile(inFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to open %q for reading: %v", args[0], err)
-	}
-
-	tempDir, err := fs.TempDir("restack.")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %v", err)
-	}
-	defer fs.RemoveAll(tempDir)
-
-	// Need to call the file git-rebase-todo to make sure file-type detection
-	// in different editors works correctly.
-	outFilePath := filepath.Join(tempDir, "git-rebase-todo")
-	outFile, err := fs.WriteFille(outFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to create file %q: %v", outFilePath, err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	// TODO: Guess remote name
-	r := restack.Restacker{RemoteName: "origin", FS: fs}
-	if err := r.Run(ctx, outFile, inFile); err != nil {
-		outFile.Close()
-		inFile.Close()
+	if _, err := parser.AddCommand(
+		"setup", "Sets up restack",
+		"Alters your git configuration to use restack during rebases.",
+		newSetupCmd(),
+	); err != nil {
 		return err
 	}
 
-	if err := multierr.Append(outFile.Close(), inFile.Close()); err != nil {
-		return fmt.Errorf("failed to close files: %v", err)
+	if _, err := parser.AddCommand(
+		"edit", "Edits a git-rebase-todo",
+		"Edits a git-rebase-todo with branch restacking. "+
+			"This is typically called directly by git after a `restack setup`.",
+		newEditCmd(),
+	); err != nil {
+		return err
 	}
 
-	cmd := exec.Command("nvim", outFilePath)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to edit %q: %v", outFilePath, err)
-	}
-
-	if err := fs.Rename(outFilePath, inFilePath); err != nil {
-		return fmt.Errorf("failed to overwrite %q: %v", inFilePath, err)
-	}
-
-	return nil
+	_, err := parser.Parse()
+	return err
 }
