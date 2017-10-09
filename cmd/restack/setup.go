@@ -20,8 +20,6 @@ func newSetupCmd() *setupCmd {
 }
 
 func (i *setupCmd) Execute([]string) error {
-	// TODO: store current core.editor value in command as an argument
-
 	restackPath, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to find path to restack executable: %v", err)
@@ -30,7 +28,13 @@ func (i *setupCmd) Execute([]string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	if err := i.git.SetGlobalConfig(ctx, "sequence.editor", restackPath+" edit"); err != nil {
+	editor, err := i.git.Var(ctx, "GIT_EDITOR")
+	if err != nil {
+		return err
+	}
+
+	cmd := fmt.Sprintf("%v edit -e %v", restackPath, editor)
+	if err := i.git.SetGlobalConfig(ctx, "sequence.editor", cmd); err != nil {
 		return fmt.Errorf("failed to set sequence editor: %v", err)
 	}
 
