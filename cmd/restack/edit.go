@@ -45,7 +45,7 @@ func (e *editCmd) Execute([]string) error {
 	// Need to call the file git-rebase-todo to make sure file-type detection
 	// in different editors works correctly.
 	outFilePath := filepath.Join(tempDir, "git-rebase-todo")
-	outFile, err := e.fs.WriteFille(outFilePath)
+	outFile, err := e.fs.WriteFile(outFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create file %q: %v", outFilePath, err)
 	}

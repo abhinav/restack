@@ -17,7 +17,7 @@ type FS interface {
 	// already exists.
 	//
 	// See os.Create.
-	WriteFille(path string) (io.WriteCloser, error)
+	WriteFile(path string) (io.WriteCloser, error)
 
 	// Renames old to new.
 	//
@@ -47,7 +47,7 @@ func (defaultFS) ReadFile(path string) (io.ReadCloser, error) {
 	return f, err
 }
 
-func (defaultFS) WriteFille(path string) (io.WriteCloser, error) {
+func (defaultFS) WriteFile(path string) (io.WriteCloser, error) {
 	f, err := os.Create(path)
 	return f, err
 }
