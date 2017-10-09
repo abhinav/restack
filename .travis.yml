@@ -1,0 +1,14 @@
+language: go
+go:
+  - 1.9
+
+before_install:
+- go version
+
+install:
+- glide --version || go get github.com/Masterminds/glide
+- glide install
+
+script:
+- go build ./cmd/...
+- make test
