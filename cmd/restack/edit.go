@@ -13,7 +13,7 @@ import (
 )
 
 type editCmd struct {
-	Editor string `short:"e" long:"editor" description:"Editor used to edit the file."`
+	Editor string `short:"e" long:"editor" env:"EDITOR" default:"vim" description:"Editor used to edit the file."`
 	Args   struct {
 		File string `positional-arg-name:"FILE" description:"Path to file being edited."`
 	} `positional-args:"yes" required:"yes"`
@@ -63,14 +63,6 @@ func (e *editCmd) Execute([]string) error {
 
 	if err := multierr.Append(outFile.Close(), inFile.Close()); err != nil {
 		return fmt.Errorf("failed to close files: %v", err)
-	}
-
-	if e.Editor == "" {
-		e.Editor = os.Getenv("EDITOR")
-	}
-
-	if e.Editor == "" {
-		e.Editor = "vim"
 	}
 
 	cmd := exec.Command(e.Editor, outFilePath)
