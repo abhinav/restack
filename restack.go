@@ -83,6 +83,7 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 			continue
 		}
 
+		addedBranchUpdates := false
 		for _, ref := range refs {
 			ref = strings.TrimPrefix(ref, "refs/heads/")
 			if ref == rebasingBranch {
@@ -93,6 +94,12 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 				return err
 			}
 			branches = append(branches, ref)
+			addedBranchUpdates = true
+		}
+
+		// Add an empty line between branch sections.
+		if addedBranchUpdates {
+			fmt.Fprintln(dst)
 		}
 	}
 
