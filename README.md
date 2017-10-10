@@ -45,28 +45,46 @@ that will push these branches to the remote.
 
 For example, given,
 
-    o-o master
+    o master
+     \
+      o A
+      |
+      o B (feature1)
        \
-        o feature1 (12345678)
+        o C
+        |
+        o D (feature2)
          \
-          o feature2 (34567890)
+          o E
+          |
+          o F
+          |
+          o G (feature3)
            \
-            o feature3 (67890abc)
-             \
-              o feature4 (90abcdef, HEAD)
+            o H (feature4, HEAD)
 
 Running `git rebase -i master` from branch `feature4` will give you the
 following instruction list.
 
-    pick 12345678 Implement 1
+    pick A
+    pick B
     exec git branch -f feature1
-    pick 34567890 Implement 2
+
+    pick C
+    pick D
     exec git branch -f feature2
-    pick 67890abc Implement 3
+
+    pick E
+    pick F
+    pick G
     exec git branch -f feature3
-    pick 90abcdef Implement 4
+
+    pick H
 
     # Uncomment this section to push the changes.
     # exec git push -f origin feature1
     # exec git push -f origin feature2
     # exec git push -f origin feature3
+
+So any changes made before each `exec git branch -f` will become part of that
+branch and all following changes will be made on top of that.
