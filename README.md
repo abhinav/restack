@@ -88,3 +88,8 @@ following instruction list.
 
 So any changes made before each `exec git branch -f` will become part of that
 branch and all following changes will be made on top of that.
+
+Credits
+=======
+
+Thanks to @kriskowal for the initial implementation of this tool as a script.
