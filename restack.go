@@ -11,15 +11,20 @@ import (
 // Restacker reads the todo list of an interactive rebase and writes a new
 // version of it with the provided configuration.
 type Restacker struct {
-	// Name of a git remote. If non-empty, an opt-in section that pushes
-	// restacked branches to this remote is also generated.
+	// Name of the git remote. If set, an opt-in section that pushes restacked
+	// branches to this remote will also be generated.
+	//
+	// This field is optional.
 	RemoteName string
 
-	// FS controls how Restacker accesses the filesystem. Defaults to
-	// DefaultFilesystem.
+	// FS controls how Restacker accesses the filesystem.
+	//
+	// This field is required.
 	FS FS
 
 	// Controls access to Git commands.
+	//
+	// This field is required.
 	Git Git
 }
 
@@ -28,14 +33,6 @@ const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
 // Run reads rebase instructions from src and writes them to dst based on the
 // Restacker configuration.
 func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error {
-	if r.FS == nil {
-		r.FS = DefaultFilesystem
-	}
-
-	if r.Git == nil {
-		r.Git = DefaultGit
-	}
-
 	rebasingBranch, err := r.Git.RebaseHeadName(ctx)
 	if err != nil {
 		return err
