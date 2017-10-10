@@ -36,6 +36,11 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 		r.Git = DefaultGit
 	}
 
+	rebasingBranch, err := r.Git.RebaseHeadName(ctx)
+	if err != nil {
+		return err
+	}
+
 	knownBranches, err := r.Git.ListHeads(ctx)
 	if err != nil {
 		return err
@@ -83,6 +88,10 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 
 		for _, ref := range refs {
 			ref = strings.TrimPrefix(ref, "refs/heads/")
+			if ref == rebasingBranch {
+				continue
+			}
+
 			if _, err := fmt.Fprintf(dst, "exec git branch -f %v\n", ref); err != nil {
 				return err
 			}

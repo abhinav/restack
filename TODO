@@ -1,2 +1,0 @@
-- While rebasing, don't include a `git branch -f` for the branch being
-  rebased.
