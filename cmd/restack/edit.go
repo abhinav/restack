@@ -65,6 +65,14 @@ func (e *editCmd) Execute([]string) error {
 		return fmt.Errorf("failed to close files: %v", err)
 	}
 
+	if e.Editor == "" {
+		e.Editor = os.Getenv("EDITOR")
+	}
+
+	if e.Editor == "" {
+		e.Editor = "vim"
+	}
+
 	cmd := exec.Command(e.Editor, outFilePath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
