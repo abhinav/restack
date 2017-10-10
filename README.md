@@ -92,4 +92,7 @@ branch and all following changes will be made on top of that.
 Credits
 =======
 
-Thanks to @kriskowal for the initial implementation of this tool as a script.
+Thanks to [@kriskowal] for the initial implementation of this tool as a
+script.
+
+  [@kriskowal]: https://github.com/kriskowal
