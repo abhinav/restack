@@ -23,11 +23,6 @@ type Git interface {
 	//   git config --global $name $value
 	SetGlobalConfig(ctx context.Context, name, value string) error
 
-	// Retrives the value of a logical git variable.
-	//
-	// See `man git-var`
-	Var(ctx context.Context, name string) (string, error)
-
 	// Returns a mapping from abbreviated hash to list of refs at that hash.
 	ListHeads(ctx context.Context) (map[string][]string, error)
 
@@ -71,16 +66,6 @@ func (*SystemGit) ListHeads(ctx context.Context) (map[string][]string, error) {
 	}()
 
 	return parseGitShowRef(out)
-}
-
-// Var implements Git.Var.
-func (*SystemGit) Var(ctx context.Context, name string) (string, error) {
-	cmd := exec.CommandContext(ctx, "git", "var", name)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("could not get git var value: %v", err)
-	}
-	return strings.TrimSpace(string(out)), nil
 }
 
 var _rebaseStateDirs = []string{"rebase-apply", "rebase-merge"}
