@@ -1,3 +1,4 @@
+// See https://github.com/abhinav/restack#readme.
 package main
 
 import (
