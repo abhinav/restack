@@ -40,6 +40,8 @@ type setupCmd struct {
 	// TODO: dry-run mode?
 	git restack.Git
 	fs  restack.FS
+
+	EditScript bool `long:"print-edit-script" description:"Print the shell script that will be used as the editor for interactive rebases."`
 }
 
 func newSetupCmd() *setupCmd {
@@ -51,6 +53,11 @@ func newSetupCmd() *setupCmd {
 }
 
 func (i *setupCmd) Execute([]string) error {
+	if i.EditScript {
+		fmt.Print(_editScript)
+		return nil
+	}
+
 	restackDir := filepath.Join(os.Getenv("HOME"), ".restack")
 	if err := i.fs.MkdirAll(restackDir); err != nil {
 		return fmt.Errorf("failed to create directory %q: %v", restackDir, err)
