@@ -38,23 +38,27 @@ func run() error {
 		return nil
 	}
 
-	if _, err := parser.AddCommand(
-		"setup", "Sets up restack",
-		"Alters your git configuration to use restack during rebases.",
-		newSetupCmd(),
-	); err != nil {
+	if err := addCommand(parser, newSetupCmd()); err != nil {
 		return err
 	}
 
-	if _, err := parser.AddCommand(
-		"edit", "Edits the instruction list for an interactive rebase.",
-		"Edits a git-rebase-todo with branch restacking. "+
-			"This is typically called directly by git after a `restack setup`.",
-		newEditCmd(),
-	); err != nil {
+	if err := addCommand(parser, newEditCmd()); err != nil {
 		return err
 	}
 
 	_, err := parser.Parse()
+	return err
+}
+
+type command interface {
+	flags.Commander
+
+	Name() string
+	ShortDesc() string
+	LongDesc() string
+}
+
+func addCommand(p *flags.Parser, cmd command) error {
+	_, err := p.AddCommand(cmd.Name(), cmd.ShortDesc(), cmd.LongDesc(), cmd)
 	return err
 }

@@ -52,6 +52,13 @@ func newSetupCmd() *setupCmd {
 	}
 }
 
+func (setupCmd) Name() string      { return "setup" }
+func (setupCmd) ShortDesc() string { return "Sets up restack" }
+func (setupCmd) LongDesc() string {
+	return "Alters your git configuration to use resack during interactive rebases. " +
+		"If you would rather do this manually, see https://github.com/abhinav/restack#manual-setup."
+}
+
 func (i *setupCmd) Execute([]string) error {
 	if i.EditScript {
 		fmt.Print(_editScript)

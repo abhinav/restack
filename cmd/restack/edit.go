@@ -30,6 +30,15 @@ func newEditCmd() *editCmd {
 	}
 }
 
+func (editCmd) Name() string      { return "edit" }
+func (editCmd) ShortDesc() string { return "Edits the instruction list for an interactive rebase." }
+func (editCmd) LongDesc() string {
+	return "Edits a git-rebase-todo with branch restacking. " +
+		"This command is meant to be called by `git` directly. " +
+		"See https://github.com/abhinav/restack#setup."
+
+}
+
 func (e *editCmd) Execute([]string) error {
 	inFilePath := e.Args.File
 	inFile, err := e.fs.ReadFile(inFilePath)
