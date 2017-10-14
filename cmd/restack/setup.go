@@ -84,7 +84,7 @@ func (i *setupCmd) Execute([]string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	if err := i.git.SetGlobalConfig(ctx, "sequence.editor", editCmd); err != nil {
+	if err := i.git.SetGlobalConfig(ctx, "sequence.editor", "~/.restack/edit.sh"); err != nil {
 		return fmt.Errorf("failed to set sequence editor: %v", err)
 	}
 
