@@ -5,10 +5,22 @@ go:
 before_install:
 - go version
 
+env:
+  global:
+    secure: "I9W5LeGsyizd7oE6GG/H3qf6xYxOAyYV9pW6zPek9Gf0Kr5Msn7BhOrWelR2m97L/RpTkglF1qWjIw9xLNHWRN/79fBKUGFVQpl1H67U/JUV5QyLUR0GHbLg5a21QpnfP8eipBH/4cngsQ5ClGGT9K47q+xlcShDfh4bWFEQhQFpXBfnGhIVmqyvbQnCEal2J7IIF7iOagDffgrbYrO9h/IqGIatW/0GKHFJBNNAVlf5OuGhLXj+9wYnUcSiaKkasXLXearvJxG0hesfF1z8MMloBLoPBTqoVZohsNycWZOtaT0pScMjX5mFY8zZat/O56Yl+aKJSPmKma9lSIhtkl3nxk6+p+b1+oBbqrfQe7jlSQaKrgmpSQu0BBleFrdlarj16yh4O7ntF3ZBh00iZgS305R1n1DG1M60kC2ZyVyzXLSi0Rd9GnRVFp0snMMa2jmV3ervpL+fg8ghpcoWSyIEFQw9U9UHV8gMJgkh1QKKiuDnXmaI0N7q2BdzSYzEzOppvkOLAycjlau042XOtlLHVV6pT5qRKEKqHj2aLdI0Ep0i2+nJoxHXcnHFHc8gIRFaMBElvLoK+4gHOt0NBXpGONybOHfIcEFzhBo0wSZBLuogX7oApibawQoA+nuqgAMqXqIZUJVcJ4YWjEvk/vnjBXzlRdR6SPTvBZXEYp4="
+
 install:
 - glide --version || go get github.com/Masterminds/glide
 - glide install
+- go get github.com/tcnksm/ghr
 
 script:
 - go build ./cmd/...
 - make test
+
+deploy:
+- provider: script
+  script: scripts/release.sh $TRAVIS_TAG
+  skip_cleanup: true
+  on:
+    tags: true
