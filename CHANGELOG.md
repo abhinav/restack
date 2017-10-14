@@ -1,7 +1,7 @@
 Releases
 ========
 
-v0.1.1 (unreleased)
+v0.1.1 (2017-10-14)
 -------------------
 
 -   setup: Allow relocating `.gitconfig` by removing hardcoded `$HOME`.
