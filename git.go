@@ -36,13 +36,18 @@ type Git interface {
 	RebaseHeadName(ctx context.Context) (string, error)
 }
 
-// DefaultGit is an instance of Git that operates on the git repository in the
-// current directory.
-var DefaultGit Git = defaultGit{}
+// SystemGit uses the global `git` command to perform git operations.
+type SystemGit struct{ fs FS }
 
-type defaultGit struct{}
+// NewSystemGit builds a new SystemGit.
+//
+// The provides FS is used for file-system operations.
+func NewSystemGit(fs FS) *SystemGit {
+	return &SystemGit{fs: fs}
+}
 
-func (defaultGit) SetGlobalConfig(ctx context.Context, name, value string) error {
+// SetGlobalConfig implements Git.SetGlobalConfig.
+func (*SystemGit) SetGlobalConfig(ctx context.Context, name, value string) error {
 	cmd := exec.CommandContext(ctx, "git", "config", "--global", name, value)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to change git config: %v", err)
@@ -50,7 +55,8 @@ func (defaultGit) SetGlobalConfig(ctx context.Context, name, value string) error
 	return nil
 }
 
-func (defaultGit) ListHeads(ctx context.Context) (map[string][]string, error) {
+// ListHeads implements Git.ListHeads.
+func (*SystemGit) ListHeads(ctx context.Context) (map[string][]string, error) {
 	cmd := exec.CommandContext(ctx, "git", "show-ref", "--heads", "--abbrev")
 	out, err := cmd.StdoutPipe()
 	if err != nil {
@@ -67,7 +73,8 @@ func (defaultGit) ListHeads(ctx context.Context) (map[string][]string, error) {
 	return parseGitShowRef(out)
 }
 
-func (defaultGit) Var(ctx context.Context, name string) (string, error) {
+// Var implements Git.Var.
+func (*SystemGit) Var(ctx context.Context, name string) (string, error) {
 	cmd := exec.CommandContext(ctx, "git", "var", name)
 	out, err := cmd.Output()
 	if err != nil {
@@ -78,7 +85,8 @@ func (defaultGit) Var(ctx context.Context, name string) (string, error) {
 
 var _rebaseStateDirs = []string{"rebase-apply", "rebase-merge"}
 
-func (defaultGit) RebaseHeadName(ctx context.Context) (string, error) {
+// RebaseHeadName implements Git.RebaseHeadName.
+func (g *SystemGit) RebaseHeadName(ctx context.Context) (string, error) {
 	// git stores information about the rebase under either .git/rebase-apply
 	// or .git/rebase-merge. Either way, the branch name is stored in a file
 	// called head-name in that directory.
@@ -92,11 +100,20 @@ func (defaultGit) RebaseHeadName(ctx context.Context) (string, error) {
 
 	for _, stateDir := range _rebaseStateDirs {
 		headFile := filepath.Join(gitDir, stateDir, "head-name")
-		if info, err := os.Stat(headFile); os.IsNotExist(err) || info.IsDir() {
+		if !g.fs.FileExists(headFile) {
 			continue
 		}
 
-		nameBytes, err := ioutil.ReadFile(headFile)
+		r, err := g.fs.ReadFile(headFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read %q: %v", headFile, err)
+		}
+
+		// It's okay to defer from inside the loop here because if we got here,
+		// this is the last iteration of the loop.
+		defer r.Close()
+
+		nameBytes, err := ioutil.ReadAll(r)
 		if err != nil {
 			return "", fmt.Errorf("failed to read %q: %v", headFile, err)
 		}

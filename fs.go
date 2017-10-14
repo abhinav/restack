@@ -8,6 +8,9 @@ import (
 
 // FS provides access to the filesystem.
 type FS interface {
+	// Returns true if a file exists at the provided path.
+	FileExists(path string) bool
+
 	// Starts reading the file at the provided path.
 	//
 	// See os.Open.
@@ -41,6 +44,11 @@ type FS interface {
 var DefaultFilesystem FS = defaultFS{}
 
 type defaultFS struct{}
+
+func (defaultFS) FileExists(path string) bool {
+	info, err := os.Stat(path)
+	return !os.IsNotExist(err) && !info.IsDir()
+}
 
 func (defaultFS) ReadFile(path string) (io.ReadCloser, error) {
 	f, err := os.Open(path)

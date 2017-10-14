@@ -16,7 +16,7 @@ type setupCmd struct {
 }
 
 func newSetupCmd() *setupCmd {
-	return &setupCmd{git: restack.DefaultGit}
+	return &setupCmd{git: restack.NewSystemGit(restack.DefaultFilesystem)}
 }
 
 func (i *setupCmd) Execute([]string) error {

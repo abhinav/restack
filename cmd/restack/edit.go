@@ -23,9 +23,10 @@ type editCmd struct {
 }
 
 func newEditCmd() *editCmd {
+	fs := restack.DefaultFilesystem
 	return &editCmd{
-		fs:  restack.DefaultFilesystem,
-		git: restack.DefaultGit,
+		fs:  fs,
+		git: restack.NewSystemGit(fs),
 	}
 }
 
