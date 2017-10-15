@@ -38,7 +38,10 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 		return err
 	}
 
-	var branches []string
+	var (
+		branches         []string
+		wrotePushSection bool
+	)
 
 	scanner := bufio.NewScanner(src)
 	for scanner.Scan() {
@@ -46,16 +49,11 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 
 		// If we found an empty line, the instructions section is over. We
 		// will add our push instructions here.
-		if len(line) == 0 && len(branches) > 0 && len(r.RemoteName) > 0 {
-			if _, err := io.WriteString(dst, _pushSectionPrefix); err != nil {
+		if len(line) == 0 {
+			if err := r.writePushSection(dst, branches); err != nil {
 				return err
 			}
-
-			for _, b := range branches {
-				if _, err := fmt.Fprintf(dst, "# exec git push -f %s %s\n", r.RemoteName, b); err != nil {
-					return err
-				}
-			}
+			wrotePushSection = true
 		}
 
 		// Most lines go in as-is.
@@ -69,7 +67,7 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 
 		// pick [hash] [msg]
 		parts := strings.SplitN(line, " ", 3)
-		if len(parts) != 3 {
+		if len(parts) < 2 {
 			continue
 		}
 
@@ -98,5 +96,29 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 		}
 	}
 
+	if !wrotePushSection {
+		if err := r.writePushSection(dst, branches); err != nil {
+			return err
+		}
+	}
+
 	return scanner.Err()
+}
+
+func (r Restacker) writePushSection(dst io.Writer, branches []string) error {
+	if len(branches) == 0 || len(r.RemoteName) == 0 {
+		return nil
+	}
+
+	if _, err := io.WriteString(dst, _pushSectionPrefix); err != nil {
+		return err
+	}
+
+	for _, b := range branches {
+		if _, err := fmt.Fprintf(dst, "# exec git push -f %s %s\n", r.RemoteName, b); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

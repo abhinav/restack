@@ -14,6 +14,8 @@ import (
 	"go.uber.org/multierr"
 )
 
+//go:generate $MOCKGEN -destination=mock_git_test.go -package=restack github.com/abhinav/restack Git
+
 // Git provides access to git commands.
 type Git interface {
 	// Changes the global configuration for the given key.
