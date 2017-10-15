@@ -64,7 +64,7 @@ func (e *editCmd) Execute([]string) error {
 	defer cancel()
 
 	// TODO: Guess remote name
-	r := restack.Restacker{RemoteName: "origin", FS: e.fs, Git: e.git}
+	r := restack.Restacker{RemoteName: "origin", Git: e.git}
 	if err := r.Run(ctx, outFile, inFile); err != nil {
 		err = multierr.Append(err, outFile.Close())
 		err = multierr.Append(err, inFile.Close())

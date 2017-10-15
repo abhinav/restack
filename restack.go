@@ -17,11 +17,6 @@ type Restacker struct {
 	// This field is optional.
 	RemoteName string
 
-	// FS controls how Restacker accesses the filesystem.
-	//
-	// This field is required.
-	FS FS
-
 	// Controls access to Git commands.
 	//
 	// This field is required.
