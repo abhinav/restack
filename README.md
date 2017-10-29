@@ -16,7 +16,7 @@ archive and put the binaries somewhere on your `$PATH`.
 For example, if you have `$HOME/bin` on your `$PATH`,
 
     OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    VERSION=v0.1.0
+    VERSION=v0.1.1
     URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack.$VERSION.$OS.amd64.tar.gz"
     curl -L "$URL" | tar xv -C ~/bin
 
