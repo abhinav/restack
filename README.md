@@ -9,16 +9,17 @@ Installation
 Binaries
 --------
 
-Pre-built 64-bit binaries are available for Linux and Mac at
+Pre-built ARM and 64-bit binaries are available for Linux and Mac at
 <https://github.com/abhinav/restack/releases>. To install, simply unpack the
 archive and put the binaries somewhere on your `$PATH`.
 
 For example, if you have `$HOME/bin` on your `$PATH`,
 
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    VERSION=v0.1.1
-    URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack.$VERSION.$OS.amd64.tar.gz"
-    curl -L "$URL" | tar xv -C ~/bin
+    OS=$(go env GOOS)
+    ARCH=$(go env GOARCH)
+    VERSION=v0.1.2
+    URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack.$VERSION.$OS.$ARCH.tar.gz"
+    curl -L "$URL" | tar xzv -C ~/bin
 
 Build From Source
 -----------------

@@ -12,8 +12,11 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 CMDS=(restack)
-OSes=(darwin linux)
-ARCHes=(amd64)
+BUILDS=(
+	"darwin amd64"
+	"linux amd64"
+	"linux arm"
+)
 
 build() {
 	os="$1"
@@ -39,11 +42,12 @@ echo "CHANGELOG:"
 echo "$CHANGELOG"
 echo ""
 
-for os in "${OSes[@]}"; do
-	for arch in "${ARCHes[@]}"; do
-		echo "Building for $os $arch"
-		build "$os" "$arch"
-	done
+for b in "${BUILDS[@]}"; do
+	parts=($b)
+	os=${parts[0]}
+	arch=${parts[1]}
+	echo "Building for $os $arch"
+	build $os $arch
 done
 
 ghr \

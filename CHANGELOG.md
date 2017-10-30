@@ -1,10 +1,10 @@
 Releases
 ========
 
-v0.1.2 (unreleased)
+v0.1.2 (2017-10-29)
 -------------------
 
--   No changes yet.
+-   Include ARM binaries.
 
 
 v0.1.1 (2017-10-14)
