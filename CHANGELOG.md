@@ -1,7 +1,7 @@
 Releases
 ========
 
-v0.1.2 (unreleased)
+v0.1.3 (2019-02-27)
 -------------------
 
 -   Interpret `GIT_EDITOR` using a shell.
