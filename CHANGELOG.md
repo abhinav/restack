@@ -1,6 +1,12 @@
 Releases
 ========
 
+v0.1.2 (unreleased)
+-------------------
+
+-   Interpret `GIT_EDITOR` using a shell.
+
+
 v0.1.2 (2017-10-29)
 -------------------
 

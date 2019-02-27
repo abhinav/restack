@@ -75,7 +75,11 @@ func (e *editCmd) Execute([]string) error {
 		return fmt.Errorf("failed to close files: %v", err)
 	}
 
-	cmd := exec.Command(e.Editor, outFilePath)
+	// Because GIT_EDITOR is meant to be interpreted by the shell, we need to
+	// rely on sh to handle that. We run,
+	//   sh -c "$GIT_EDITOR $1" "restack" $FILE
+	// This has the effect of invoking GIT_EDITOR with the argument $FILE.
+	cmd := exec.Command("sh", "-c", e.Editor+` "$1"`, "restack", outFilePath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
