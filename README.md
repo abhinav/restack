@@ -1,7 +1,11 @@
 [![Build Status](https://travis-ci.org/abhinav/restack.svg?branch=master)](https://travis-ci.org/abhinav/restack)
 
 restack augments the experience of performing an interactive Git rebase to make
-it more friendly to workflows that involve lots of interdependent branches.
+it more friendly to workflows that involve lots of interdependent branches. For
+more background on why this exists and the workflow it facilitates, see
+[Automatically Restacking Git Branches][1].
+
+  [1]: https://abhinavg.net/posts/restacking-branches/
 
 Installation
 ============
