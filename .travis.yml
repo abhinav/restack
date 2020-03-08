@@ -10,8 +10,7 @@ before_install:
 - go version
 
 install:
-- glide --version || go get github.com/Masterminds/glide
-- glide install
+- go mod download
 - go get github.com/tcnksm/ghr
 
 script:

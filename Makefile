@@ -1,22 +1,14 @@
-PACKAGES = $(shell glide nv)
+export GOBIN ?= $(CURDIR)/bin
 
-PROJECT_DIR = $(shell pwd)
-MOCKGEN     = $(PROJECT_DIR)/.tmp/mockgen
-VENDOR      = $(PROJECT_DIR)/vendor
+MOCKGEN = $(GOBIN)/mockgen
 
 .PHONY: test
 test:
-	go test -race -v $(PACKAGES)
+	go test -race -v ./...
 
 .PHONY: generate
 generate: $(MOCKGEN)
-	MOCKGEN=$(MOCKGEN) go generate $(PACKAGES)
+	PATH=$(GOBIN):$$PATH go generate ./...
 
 $(MOCKGEN):
-	@mkdir -p $(dir $(MOCKGEN))
-	@echo "Building mockgen"; \
-		DIR=$$(mktemp -d) && \
-		cd $$DIR && \
-		ln -s $(VENDOR) $$DIR/src && \
-		GOPATH=$$DIR go build -o $(MOCKGEN) github.com/golang/mock/mockgen && \
-		rm -rf $$DIR
+	go install github.com/golang/mock/mockgen
