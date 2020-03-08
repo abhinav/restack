@@ -16,6 +16,7 @@ install:
 script:
 - go build ./cmd/...
 - make test
+- make lint
 
 deploy:
 - provider: script
