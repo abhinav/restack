@@ -62,17 +62,3 @@ func (mr *MockGitMockRecorder) RebaseHeadName(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RebaseHeadName", reflect.TypeOf((*MockGit)(nil).RebaseHeadName), arg0)
 }
-
-// SetGlobalConfig mocks base method
-func (m *MockGit) SetGlobalConfig(arg0 context.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetGlobalConfig", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetGlobalConfig indicates an expected call of SetGlobalConfig
-func (mr *MockGitMockRecorder) SetGlobalConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGlobalConfig", reflect.TypeOf((*MockGit)(nil).SetGlobalConfig), arg0, arg1, arg2)
-}

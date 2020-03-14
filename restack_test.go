@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestRestacker(t *testing.T) {
@@ -141,11 +141,16 @@ func TestRestacker(t *testing.T) {
 			defer cancel()
 
 			r := Restacker{RemoteName: tt.RemoteName, Git: mockGit}
-			require.NoError(t, r.Run(ctx, &dst, src), "failed to run Restacker")
+			err := r.Run(ctx, &dst, src)
+			if err != nil {
+				t.Fatalf("restacker failed: %v", err)
+			}
 
+			want := append(tt.Want, "")
 			got := strings.Split(dst.String(), "\n")
-			require.Equal(t, append(tt.Want, ""), got,
-				"Restacker output does not match")
+			if diff := cmp.Diff(want, got); len(diff) > 0 {
+				t.Errorf("output: (-want, +got):\n%s", diff)
+			}
 		})
 	}
 }

@@ -2,64 +2,60 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"io"
 	"os"
+	"time"
 
 	"github.com/abhinav/restack"
-	flags "github.com/jessevdk/go-flags"
 )
 
 func main() {
-	log.SetFlags(0)
-	if err := run(); err != nil {
-		log.Fatalf("%+v", err)
+	if err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
 	}
 }
 
-func run() error {
-	var opts struct {
-		Version bool `long:"version" description:"Prints the current version of restack."`
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	parser, opts := newParser()
+	if _, err := parser.ParseArgs(args); err != nil {
+		return err
 	}
 
-	parser := flags.NewParser(&opts, flags.HelpFlag)
-
-	// If --version was specified, a command probably was not. So we need to
-	// make subcommands optional and validate manually.
-	parser.SubcommandsOptional = true
-	parser.CommandHandler = func(c flags.Commander, args []string) error {
-		switch {
-		case opts.Version:
-			fmt.Printf("restack v%s\n", restack.Version)
-		case c == nil:
-			parser.WriteHelp(os.Stderr)
-		default:
-			return c.Execute(args)
-		}
+	if opts.Version {
+		fmt.Fprintf(stdout, "restack v%s\n", restack.Version)
 		return nil
 	}
 
-	if err := addCommand(parser, newSetupCmd()); err != nil {
-		return err
+	getenv := os.Getenv
+	git := &restack.SystemGit{Getenv: getenv}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	switch {
+	case opts.Edit != nil:
+		e := opts.Edit
+		return (&restack.Edit{
+			Editor: e.Editor,
+			Path:   e.Args.File,
+			Git:    git,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
+		}).Run(ctx)
+
+	case opts.Setup != nil:
+		return (&restack.Setup{
+			PrintScript: opts.Setup.EditScript,
+			Stdout:      stdout,
+			Stderr:      stderr,
+		}).Run(ctx)
+	default:
+		parser.WriteHelp(stderr)
 	}
 
-	if err := addCommand(parser, newEditCmd()); err != nil {
-		return err
-	}
-
-	_, err := parser.Parse()
-	return err
-}
-
-type command interface {
-	flags.Commander
-
-	Name() string
-	ShortDesc() string
-	LongDesc() string
-}
-
-func addCommand(p *flags.Parser, cmd command) error {
-	_, err := p.AddCommand(cmd.Name(), cmd.ShortDesc(), cmd.LongDesc(), cmd)
-	return err
+	return nil
 }
