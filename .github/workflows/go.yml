@@ -36,5 +36,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      run:
-        ./scripts/release.sh ${{ github.ref }}
+      run: |
+        GOBIN="$(pwd)/bin" go install github.com/tcnksm/ghr
+        PATH="$(pwd)/bin:$PATH" ./scripts/release.sh ${{ github.ref }}

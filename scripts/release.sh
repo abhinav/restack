@@ -10,6 +10,7 @@ if [[ -z "$VERSION" ]]; then
 	echo "USAGE: $0 VERSION"
 	exit 1
 fi
+VERSION="${VERSION#refs/tags/}"
 
 CMDS=(restack)
 BUILDS=(

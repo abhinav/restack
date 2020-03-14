@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/abhinav/restack.svg?branch=master)](https://travis-ci.org/abhinav/restack)
+![Go](https://github.com/abhinav/restack/workflows/Go/badge.svg)
 
 restack augments the experience of performing an interactive Git rebase to make
 it more friendly to workflows that involve lots of interdependent branches. For
