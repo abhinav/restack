@@ -3,13 +3,14 @@ name: Go
 on:
   push:
     branches: [ master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
 
 jobs:
 
   build:
-    name: Build
+    name: Build and Release
     runs-on: ubuntu-latest
     steps:
 
@@ -25,8 +26,15 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
-    - name: Lin, build, and test
+    - name: Lint, build, and test
       run: |
         make lint
         go build -v ./...
         go test -race -v ./...
+
+    - name: Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'push' && startsWith(github.ref, "refs/tags/v")
+      run:
+        ./scripts/release.sh ${{ github.ref }}
