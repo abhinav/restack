@@ -20,7 +20,8 @@ type Edit struct {
 	// Path to file containing initial rebase instruction list.
 	Path string
 
-	Git    Git
+	Restacker Restacker
+
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
@@ -48,8 +49,8 @@ func (e *Edit) Run(ctx context.Context) error {
 	}
 
 	// TODO: Guess remote name
-	r := Restacker{RemoteName: "origin", Git: e.Git}
-	if err := r.Run(ctx, outFile, inFile); err != nil {
+	req := Request{RemoteName: "origin", From: inFile, To: outFile}
+	if err := e.Restacker.Restack(ctx, &req); err != nil {
 		err = multierr.Append(err, outFile.Close())
 		err = multierr.Append(err, inFile.Close())
 		return err

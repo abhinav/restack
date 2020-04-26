@@ -14,7 +14,7 @@ import (
 	"go.uber.org/multierr"
 )
 
-//go:generate mockgen -destination=mock_git_test.go -package=restack github.com/abhinav/restack Git
+//go:generate mockgen -destination=mock_git_test.go -package=restack -self_package github.com/abhinav/restack github.com/abhinav/restack Git
 
 // Git provides access to git commands.
 type Git interface {

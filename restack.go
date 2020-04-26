@@ -8,26 +8,39 @@ import (
 	"strings"
 )
 
-// Restacker reads the todo list of an interactive rebase and writes a new
-// version of it with the provided configuration.
-type Restacker struct {
+// Request is a request to process a rebase instruction list.
+type Request struct {
 	// Name of the git remote. If set, an opt-in section that pushes restacked
 	// branches to this remote will also be generated.
 	//
 	// This field is optional.
 	RemoteName string
 
+	// Input and output instruction lists.
+	From io.Reader
+	To   io.Writer
+}
+
+// Restacker processes the rebase instruction list.
+type Restacker interface {
+	Restack(context.Context, *Request) error
+}
+
+// GitRestacker restacks instruction lists using the provided Git instance.
+type GitRestacker struct {
 	// Controls access to Git commands.
 	//
 	// This field is required.
 	Git Git
 }
 
-const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
+var _ Restacker = (*GitRestacker)(nil)
 
-// Run reads rebase instructions from src and writes them to dst based on the
-// Restacker configuration.
-func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error {
+// Restack process the provided instruction list.
+func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
+	src := req.From
+	dst := req.To
+
 	rebasingBranch, err := r.Git.RebaseHeadName(ctx)
 	if err != nil {
 		return err
@@ -50,7 +63,7 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 		// If we found an empty line, the instructions section is over. We
 		// will add our push instructions here.
 		if len(line) == 0 {
-			if err := r.writePushSection(dst, branches); err != nil {
+			if err := r.writePushSection(req.RemoteName, dst, branches); err != nil {
 				return err
 			}
 			wrotePushSection = true
@@ -97,7 +110,7 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 	}
 
 	if !wrotePushSection {
-		if err := r.writePushSection(dst, branches); err != nil {
+		if err := r.writePushSection(req.RemoteName, dst, branches); err != nil {
 			return err
 		}
 	}
@@ -105,8 +118,10 @@ func (r Restacker) Run(ctx context.Context, dst io.Writer, src io.Reader) error 
 	return scanner.Err()
 }
 
-func (r Restacker) writePushSection(dst io.Writer, branches []string) error {
-	if len(branches) == 0 || len(r.RemoteName) == 0 {
+const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
+
+func (r *GitRestacker) writePushSection(remoteName string, dst io.Writer, branches []string) error {
+	if len(branches) == 0 || len(remoteName) == 0 {
 		return nil
 	}
 
@@ -115,7 +130,7 @@ func (r Restacker) writePushSection(dst io.Writer, branches []string) error {
 	}
 
 	for _, b := range branches {
-		if _, err := fmt.Fprintf(dst, "# exec git push -f %s %s\n", r.RemoteName, b); err != nil {
+		if _, err := fmt.Fprintf(dst, "# exec git push -f %s %s\n", remoteName, b); err != nil {
 			return err
 		}
 	}

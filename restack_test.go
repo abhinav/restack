@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestRestacker(t *testing.T) {
+func TestGitRestacker(t *testing.T) {
 	tests := []struct {
 		Desc           string
 		RemoteName     string
@@ -140,8 +140,12 @@ func TestRestacker(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			r := Restacker{RemoteName: tt.RemoteName, Git: mockGit}
-			err := r.Run(ctx, &dst, src)
+			r := GitRestacker{Git: mockGit}
+			err := r.Restack(ctx, &Request{
+				RemoteName: tt.RemoteName,
+				From:       src,
+				To:         &dst,
+			})
 			if err != nil {
 				t.Fatalf("restacker failed: %v", err)
 			}
