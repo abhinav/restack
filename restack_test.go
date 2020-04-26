@@ -26,7 +26,7 @@ func TestGitRestacker(t *testing.T) {
 			RemoteName:     "origin",
 			RebaseHeadName: "feature",
 			KnownHeads: map[string][]string{
-				"hash1": []string{"feature"},
+				"hash1": {"feature"},
 			},
 			Give: []string{
 				"pick hash0 Do something",
@@ -49,7 +49,7 @@ func TestGitRestacker(t *testing.T) {
 			RemoteName:     "origin",
 			RebaseHeadName: "feature/wip",
 			KnownHeads: map[string][]string{
-				"hash1": []string{"feature/1", "feature/wip"},
+				"hash1": {"feature/1", "feature/wip"},
 			},
 			Give: []string{
 				"pick hash0 Do something",
@@ -78,10 +78,10 @@ func TestGitRestacker(t *testing.T) {
 			RemoteName:     "origin",
 			RebaseHeadName: "feature/wip",
 			KnownHeads: map[string][]string{
-				"hash1": []string{"feature/1"},
-				"hash3": []string{"feature/2"},
-				"hash7": []string{"feature/3"},
-				"hash9": []string{"feature/wip"},
+				"hash1": {"feature/1"},
+				"hash3": {"feature/2"},
+				"hash7": {"feature/3"},
+				"hash9": {"feature/wip"},
 			},
 			Give: []string{
 				"pick hash0 Do something 0",
