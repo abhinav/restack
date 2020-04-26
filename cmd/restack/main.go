@@ -39,12 +39,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	case opts.Edit != nil:
 		e := opts.Edit
 		return (&restack.Edit{
-			Editor: e.Editor,
-			Path:   e.Args.File,
-			Git:    git,
-			Stdin:  stdin,
-			Stdout: stdout,
-			Stderr: stderr,
+			Editor:    e.Editor,
+			Path:      e.Args.File,
+			Restacker: &restack.GitRestacker{Git: git},
+			Stdin:     stdin,
+			Stdout:    stdout,
+			Stderr:    stderr,
 		}).Run(ctx)
 
 	case opts.Setup != nil:
