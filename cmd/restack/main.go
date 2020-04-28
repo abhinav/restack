@@ -36,7 +36,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	defer cancel()
 
 	switch {
-	case opts.Edit != nil:
+	case opts.Edit.Valid():
 		e := opts.Edit
 		return (&restack.Edit{
 			Editor:    e.Editor,
@@ -47,7 +47,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			Stderr:    stderr,
 		}).Run(ctx)
 
-	case opts.Setup != nil:
+	case opts.Setup.Valid():
 		return (&restack.Setup{
 			PrintScript: opts.Setup.EditScript,
 			Stdout:      stdout,
