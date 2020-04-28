@@ -39,7 +39,6 @@ var _ Restacker = (*GitRestacker)(nil)
 // Restack process the provided instruction list.
 func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
 	src := req.From
-	dst := req.To
 
 	rebasingBranch, err := r.Git.RebaseHeadName(ctx)
 	if err != nil {
@@ -51,88 +50,111 @@ func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	var (
-		branches         []string
-		wrotePushSection bool
-	)
+	gr := gitRestack{
+		RemoteName:     req.RemoteName,
+		RebaseHeadName: rebasingBranch,
+		KnownBranches:  knownBranches,
+		To:             req.To,
+	}
 
 	scanner := bufio.NewScanner(src)
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		// If we found an empty line, the instructions section is over. We
-		// will add our push instructions here.
-		if len(line) == 0 {
-			if err := r.writePushSection(req.RemoteName, dst, branches); err != nil {
-				return err
-			}
-			wrotePushSection = true
-		}
-
-		// Most lines go in as-is.
-		if _, err := fmt.Fprintln(dst, line); err != nil {
-			return err
-		}
-
-		if !strings.HasPrefix(line, "pick ") {
-			continue
-		}
-
-		// pick [hash] [msg]
-		parts := strings.SplitN(line, " ", 3)
-		if len(parts) < 2 {
-			continue
-		}
-
-		refs, ok := knownBranches[parts[1]]
-		if !ok {
-			continue
-		}
-
-		addedBranchUpdates := false
-		for _, ref := range refs {
-			ref = strings.TrimPrefix(ref, "refs/heads/")
-			if ref == rebasingBranch {
-				continue
-			}
-
-			if _, err := fmt.Fprintf(dst, "exec git branch -f %v\n", ref); err != nil {
-				return err
-			}
-			branches = append(branches, ref)
-			addedBranchUpdates = true
-		}
-
-		// Add an empty line between branch sections.
-		if addedBranchUpdates {
-			fmt.Fprintln(dst)
-		}
+		gr.Process(scanner.Text())
 	}
-
-	if !wrotePushSection {
-		if err := r.writePushSection(req.RemoteName, dst, branches); err != nil {
-			return err
-		}
-	}
-
-	return scanner.Err()
-}
-
-const _pushSectionPrefix = "\n# Uncomment this section to push the changes.\n"
-
-func (r *GitRestacker) writePushSection(remoteName string, dst io.Writer, branches []string) error {
-	if len(branches) == 0 || len(remoteName) == 0 {
-		return nil
-	}
-
-	if _, err := io.WriteString(dst, _pushSectionPrefix); err != nil {
+	if err := scanner.Err(); err != nil {
 		return err
 	}
 
-	for _, b := range branches {
-		if _, err := fmt.Fprintf(dst, "# exec git push -f %s %s\n", remoteName, b); err != nil {
+	return gr.WritePushSection(true, false)
+}
+
+type gitRestack struct {
+	RemoteName     string
+	RebaseHeadName string
+	KnownBranches  map[string][]string
+	To             io.Writer
+
+	updatedBranches  []string
+	wrotePushSection bool
+}
+
+func (r *gitRestack) Process(line string) error {
+	// If we see comments, write the push section first.
+	if len(line) > 0 && line[0] == '#' {
+		if err := r.WritePushSection(false, true); err != nil {
 			return err
 		}
+	}
+
+	// Most lines go in as-is.
+	if _, err := fmt.Fprintln(r.To, line); err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(line, "pick ") {
+		return nil
+	}
+
+	// pick [hash] [msg]
+	parts := strings.SplitN(line, " ", 3)
+	if len(parts) < 2 {
+		return nil
+	}
+
+	refs, ok := r.KnownBranches[parts[1]]
+	if !ok {
+		return nil
+	}
+
+	addedBranchUpdates := false
+	for _, ref := range refs {
+		ref = strings.TrimPrefix(ref, "refs/heads/")
+		if ref == r.RebaseHeadName {
+			continue
+		}
+
+		if _, err := fmt.Fprintf(r.To, "exec git branch -f %v\n", ref); err != nil {
+			return err
+		}
+		r.updatedBranches = append(r.updatedBranches, ref)
+		addedBranchUpdates = true
+	}
+
+	// Add an empty line between branch sections.
+	if addedBranchUpdates {
+		fmt.Fprintln(r.To)
+	}
+
+	return nil
+}
+
+const _pushSectionPrefix = "# Uncomment this section to push the changes.\n"
+
+func (r *gitRestack) WritePushSection(padBefore, padAfter bool) error {
+	if r.wrotePushSection {
+		return nil
+	}
+	r.wrotePushSection = true
+
+	if len(r.updatedBranches) == 0 || len(r.RemoteName) == 0 {
+		return nil
+	}
+
+	if padBefore {
+		io.WriteString(r.To, "\n")
+	}
+	if _, err := io.WriteString(r.To, _pushSectionPrefix); err != nil {
+		return err
+	}
+
+	for _, b := range r.updatedBranches {
+		if _, err := fmt.Fprintf(r.To, "# exec git push -f %s %s\n", r.RemoteName, b); err != nil {
+			return err
+		}
+	}
+
+	if padAfter {
+		io.WriteString(r.To, "\n")
 	}
 
 	return nil
