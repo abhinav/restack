@@ -5,6 +5,7 @@ v0.3.1 (2020-04-28)
 -------------------
 
 -   Fix CLI parsing breakage.
+-   Don't kill editor after 1 second.
 
 
 v0.3.0 (2020-04-27)

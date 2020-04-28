@@ -32,9 +32,6 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	getenv := os.Getenv
 	git := &restack.SystemGit{Getenv: getenv}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
 	switch {
 	case opts.Edit.Valid():
 		e := opts.Edit
@@ -45,9 +42,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			Stdin:     stdin,
 			Stdout:    stdout,
 			Stderr:    stderr,
-		}).Run(ctx)
+		}).Run(context.Background())
 
 	case opts.Setup.Valid():
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
 		return (&restack.Setup{
 			PrintScript: opts.Setup.EditScript,
 			Stdout:      stdout,
