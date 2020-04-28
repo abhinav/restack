@@ -16,7 +16,7 @@ func TestGitRestacker(t *testing.T) {
 		Desc           string
 		RemoteName     string
 		RebaseHeadName string
-		KnownHeads     map[string][]string
+		Branches       []Branch
 
 		Give []string
 		Want []string
@@ -25,8 +25,8 @@ func TestGitRestacker(t *testing.T) {
 			Desc:           "No matches",
 			RemoteName:     "origin",
 			RebaseHeadName: "feature",
-			KnownHeads: map[string][]string{
-				"hash1": {"feature"},
+			Branches: []Branch{
+				{Name: "feature", Hash: "hash1"},
 			},
 			Give: []string{
 				"pick hash0 Do something",
@@ -48,8 +48,9 @@ func TestGitRestacker(t *testing.T) {
 			Desc:           "Branch at rebase head",
 			RemoteName:     "origin",
 			RebaseHeadName: "feature/wip",
-			KnownHeads: map[string][]string{
-				"hash1": {"feature/1", "feature/wip"},
+			Branches: []Branch{
+				{Name: "feature/1", Hash: "hash1"},
+				{Name: "feature/wip", Hash: "hash1"},
 			},
 			Give: []string{
 				"pick hash0 Do something",
@@ -77,11 +78,11 @@ func TestGitRestacker(t *testing.T) {
 			Desc:           "Rebase instructions missing",
 			RemoteName:     "origin",
 			RebaseHeadName: "feature/wip",
-			KnownHeads: map[string][]string{
-				"hash1": {"feature/1"},
-				"hash3": {"feature/2"},
-				"hash7": {"feature/3"},
-				"hash9": {"feature/wip"},
+			Branches: []Branch{
+				{Name: "feature/1", Hash: "hash1"},
+				{Name: "feature/2", Hash: "hash3"},
+				{Name: "feature/3", Hash: "hash7"},
+				{Name: "feature/wip", Hash: "hash9"},
 			},
 			Give: []string{
 				"pick hash0 Do something 0",
@@ -131,8 +132,8 @@ func TestGitRestacker(t *testing.T) {
 				RebaseHeadName(gomock.Any()).
 				Return(tt.RebaseHeadName, nil)
 			mockGit.EXPECT().
-				ListHeads(gomock.Any()).
-				Return(tt.KnownHeads, nil)
+				ListBranches(gomock.Any()).
+				Return(tt.Branches, nil)
 
 			src := bytes.NewBufferString(strings.Join(tt.Give, "\n") + "\n")
 			var dst bytes.Buffer

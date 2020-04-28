@@ -45,9 +45,14 @@ func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	knownBranches, err := r.Git.ListHeads(ctx)
+	branches, err := r.Git.ListBranches(ctx)
 	if err != nil {
 		return err
+	}
+
+	knownBranches := make(map[string][]Branch)
+	for _, b := range branches {
+		knownBranches[b.Hash] = append(knownBranches[b.Hash], b)
 	}
 
 	gr := gitRestack{
@@ -71,7 +76,7 @@ func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
 type gitRestack struct {
 	RemoteName     string
 	RebaseHeadName string
-	KnownBranches  map[string][]string
+	KnownBranches  map[string][]Branch
 	To             io.Writer
 
 	updatedBranches  []string
@@ -101,22 +106,21 @@ func (r *gitRestack) Process(line string) error {
 		return nil
 	}
 
-	refs, ok := r.KnownBranches[parts[1]]
+	branches, ok := r.KnownBranches[parts[1]]
 	if !ok {
 		return nil
 	}
 
 	addedBranchUpdates := false
-	for _, ref := range refs {
-		ref = strings.TrimPrefix(ref, "refs/heads/")
-		if ref == r.RebaseHeadName {
+	for _, b := range branches {
+		if b.Name == r.RebaseHeadName {
 			continue
 		}
 
-		if _, err := fmt.Fprintf(r.To, "exec git branch -f %v\n", ref); err != nil {
+		if _, err := fmt.Fprintf(r.To, "exec git branch -f %v\n", b.Name); err != nil {
 			return err
 		}
-		r.updatedBranches = append(r.updatedBranches, ref)
+		r.updatedBranches = append(r.updatedBranches, b.Name)
 		addedBranchUpdates = true
 	}
 

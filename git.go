@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"go.uber.org/multierr"
@@ -16,10 +17,15 @@ import (
 
 //go:generate mockgen -destination=mock_git_test.go -package=restack -self_package github.com/abhinav/restack github.com/abhinav/restack Git
 
+// Branch refers to a Git branch.
+type Branch struct {
+	Name string
+	Hash string
+}
+
 // Git provides access to git commands.
 type Git interface {
-	// Returns a mapping from abbreviated hash to list of refs at that hash.
-	ListHeads(ctx context.Context) (map[string][]string, error)
+	ListBranches(ctx context.Context) ([]Branch, error)
 
 	// RebaseHeadName returns the name of the branch being rebased or an empty
 	// string if we're not in the middle of a rebase.
@@ -29,24 +35,6 @@ type Git interface {
 // SystemGit uses the global `git` command to perform git operations.
 type SystemGit struct {
 	Getenv func(string) string
-}
-
-// ListHeads implements Git.ListHeads.
-func (*SystemGit) ListHeads(ctx context.Context) (map[string][]string, error) {
-	cmd := exec.CommandContext(ctx, "git", "show-ref", "--heads", "--abbrev")
-	out, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("failed to run git show-ref: %v", err)
-	}
-	defer func() {
-		err = multierr.Append(err, cmd.Wait())
-	}()
-
-	return parseGitShowRef(out)
 }
 
 var _rebaseStateDirs = []string{"rebase-apply", "rebase-merge"}
@@ -88,8 +76,30 @@ func (g *SystemGit) RebaseHeadName(ctx context.Context) (string, error) {
 	return "", nil
 }
 
-func parseGitShowRef(r io.Reader) (map[string][]string, error) {
-	refs := make(map[string][]string)
+// ListBranches implements Git.ListBranches.
+func (*SystemGit) ListBranches(ctx context.Context) ([]Branch, error) {
+	cmd := exec.CommandContext(ctx, "git", "show-ref", "--heads", "--abbrev")
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to run git show-ref: %v", err)
+	}
+	defer func() {
+		err = multierr.Append(err, cmd.Wait())
+	}()
+
+	bs, err := parseGitShowRef(out)
+	sort.Slice(bs, func(i, j int) bool {
+		return bs[i].Name < bs[j].Name
+	})
+	return bs, err
+}
+
+func parseGitShowRef(r io.Reader) ([]Branch, error) {
+	var bs []Branch
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -99,7 +109,10 @@ func parseGitShowRef(r io.Reader) (map[string][]string, error) {
 		}
 		hash := toks[0]
 		ref := toks[1]
-		refs[hash] = append(refs[hash], ref)
+		bs = append(bs, Branch{
+			Name: strings.TrimPrefix(ref, "refs/heads/"),
+			Hash: hash,
+		})
 	}
-	return refs, scanner.Err()
+	return bs, scanner.Err()
 }

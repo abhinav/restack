@@ -33,19 +33,19 @@ func (m *MockGit) EXPECT() *MockGitMockRecorder {
 	return m.recorder
 }
 
-// ListHeads mocks base method
-func (m *MockGit) ListHeads(arg0 context.Context) (map[string][]string, error) {
+// ListBranches mocks base method
+func (m *MockGit) ListBranches(arg0 context.Context) ([]Branch, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListHeads", arg0)
-	ret0, _ := ret[0].(map[string][]string)
+	ret := m.ctrl.Call(m, "ListBranches", arg0)
+	ret0, _ := ret[0].([]Branch)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListHeads indicates an expected call of ListHeads
-func (mr *MockGitMockRecorder) ListHeads(arg0 interface{}) *gomock.Call {
+// ListBranches indicates an expected call of ListBranches
+func (mr *MockGitMockRecorder) ListBranches(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHeads", reflect.TypeOf((*MockGit)(nil).ListHeads), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBranches", reflect.TypeOf((*MockGit)(nil).ListBranches), arg0)
 }
 
 // RebaseHeadName mocks base method
