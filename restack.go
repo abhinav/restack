@@ -70,7 +70,8 @@ func (r *GitRestacker) Restack(ctx context.Context, req *Request) error {
 		return err
 	}
 
-	return gr.WritePushSection(true, false)
+	gr.Finish()
+	return nil
 }
 
 type gitRestack struct {
@@ -79,6 +80,7 @@ type gitRestack struct {
 	KnownBranches  map[string][]Branch
 	To             io.Writer
 
+	lastLineBranches []Branch
 	updatedBranches  []string
 	wrotePushSection bool
 }
@@ -86,8 +88,19 @@ type gitRestack struct {
 func (r *gitRestack) Process(line string) error {
 	// If we see comments, write the push section first.
 	if len(line) > 0 && line[0] == '#' {
-		if err := r.WritePushSection(false, true); err != nil {
+		if err := r.writePushSection(false, true); err != nil {
 			return err
+		}
+	}
+
+	// (p[ick]|f[ixup]|s[quash]) hash ...
+	parts := strings.SplitN(line, " ", 3)
+	if len(parts) > 1 {
+		switch parts[0] {
+		case "f", "fixup", "s", "squash":
+			// Do nothing.
+		default:
+			r.updatePreviousBranches()
 		}
 	}
 
@@ -96,45 +109,47 @@ func (r *gitRestack) Process(line string) error {
 		return err
 	}
 
-	if !strings.HasPrefix(line, "pick ") {
-		return nil
-	}
-
-	// pick [hash] [msg]
-	parts := strings.SplitN(line, " ", 3)
 	if len(parts) < 2 {
 		return nil
 	}
 
-	branches, ok := r.KnownBranches[parts[1]]
-	if !ok {
-		return nil
-	}
-
-	addedBranchUpdates := false
-	for _, b := range branches {
-		if b.Name == r.RebaseHeadName {
-			continue
-		}
-
-		if _, err := fmt.Fprintf(r.To, "exec git branch -f %v\n", b.Name); err != nil {
-			return err
-		}
-		r.updatedBranches = append(r.updatedBranches, b.Name)
-		addedBranchUpdates = true
-	}
-
-	// Add an empty line between branch sections.
-	if addedBranchUpdates {
-		fmt.Fprintln(r.To)
+	switch parts[0] {
+	case "p", "pick", "r", "reword", "e", "edit":
+		r.lastLineBranches = r.KnownBranches[parts[1]]
 	}
 
 	return nil
 }
 
+func (r *gitRestack) Finish() {
+	r.updatePreviousBranches()
+	r.writePushSection(true, false)
+}
+
+func (r *gitRestack) updatePreviousBranches() {
+	branches := r.lastLineBranches
+	r.lastLineBranches = nil
+
+	updated := false
+	for _, b := range branches {
+		if b.Name == r.RebaseHeadName {
+			continue
+		}
+
+		fmt.Fprintf(r.To, "exec git branch -f %v\n", b.Name)
+		r.updatedBranches = append(r.updatedBranches, b.Name)
+		updated = true
+	}
+
+	// Add an empty line between branch sections.
+	if updated {
+		fmt.Fprintln(r.To)
+	}
+}
+
 const _pushSectionPrefix = "# Uncomment this section to push the changes.\n"
 
-func (r *gitRestack) WritePushSection(padBefore, padAfter bool) error {
+func (r *gitRestack) writePushSection(padBefore, padAfter bool) error {
 	if r.wrotePushSection {
 		return nil
 	}

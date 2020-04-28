@@ -5,6 +5,8 @@ v0.3.0 (unreleased)
 -------------------
 
 -   Write the full edit script path to git configuration.
+-   Handle short-forms instructions.
+-   Handle `fixup` and `squash` instructions.
 
 
 v0.2.0 (2020-03-13)

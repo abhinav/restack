@@ -120,6 +120,50 @@ func TestGitRestacker(t *testing.T) {
 				"# exec git push -f origin feature/3",
 			},
 		},
+		{
+			Desc:           "fixup commit",
+			RebaseHeadName: "b",
+			Branches: []Branch{
+				{Name: "a", Hash: "hash1"},
+				{Name: "b", Hash: "hash3"},
+			},
+			Give: []string{
+				"pick hash0 do thing",
+				"pick hash1 another thing",
+				"fixup hash2 stuff",
+				"pick hash3 whatever",
+			},
+			Want: []string{
+				"pick hash0 do thing",
+				"pick hash1 another thing",
+				"fixup hash2 stuff",
+				"exec git branch -f a",
+				"",
+				"pick hash3 whatever",
+			},
+		},
+		{
+			Desc:           "squash commit",
+			RebaseHeadName: "b",
+			Branches: []Branch{
+				{Name: "a", Hash: "hash1"},
+				{Name: "b", Hash: "hash3"},
+			},
+			Give: []string{
+				"pick hash0 do thing",
+				"pick hash1 another thing",
+				"squash hash2 stuff",
+				"pick hash3 whatever",
+			},
+			Want: []string{
+				"pick hash0 do thing",
+				"pick hash1 another thing",
+				"squash hash2 stuff",
+				"exec git branch -f a",
+				"",
+				"pick hash3 whatever",
+			},
+		},
 	}
 
 	for _, tt := range tests {
