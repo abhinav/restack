@@ -21,7 +21,7 @@ For example, if you have `$HOME/bin` on your `$PATH`,
 
     OS=$(go env GOOS)
     ARCH=$(go env GOARCH)
-    VERSION=v0.3.0
+    VERSION=v0.3.1
     URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack.$VERSION.$OS.$ARCH.tar.gz"
     curl -L "$URL" | tar xzv -C ~/bin
 
