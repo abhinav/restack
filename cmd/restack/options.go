@@ -2,17 +2,32 @@ package main
 
 import flags "github.com/jessevdk/go-flags"
 
+type command struct{ valid bool }
+
+var _ flags.Commander = (*command)(nil)
+
+func (c *command) Valid() bool { return c.valid }
+
+func (c *command) Execute([]string) error {
+	c.valid = true
+	return nil
+}
+
 type options struct {
-	Version bool      `long:"version"`
-	Edit    *editCmd  `command:"edit"`
-	Setup   *setupCmd `command:"setup"`
+	Version bool     `long:"version"`
+	Edit    editCmd  `command:"edit"`
+	Setup   setupCmd `command:"setup"`
 }
 
 type setupCmd struct {
+	command
+
 	EditScript bool `long:"print-edit-script"`
 }
 
 type editCmd struct {
+	command
+
 	Editor string `short:"e" long:"editor" env:"EDITOR" default:"vim"`
 	Args   struct {
 		File string `positional-arg-name:"FILE"`
