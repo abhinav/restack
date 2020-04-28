@@ -1,7 +1,7 @@
 Releases
 ========
 
-v0.3.0 (unreleased)
+v0.3.0 (2020-04-27)
 -------------------
 
 -   Write the full edit script path to git configuration.
