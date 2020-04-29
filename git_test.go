@@ -13,7 +13,7 @@ import (
 func TestSystemGit_RebaseHeadName(t *testing.T) {
 	testutil.Chdir(t, testutil.TempDir(t))
 
-	git(t, "init")
+	gitInit(t)
 
 	// Make this git repository use our fake editor to edit rebase
 	// instructions. The fake editor will leave the contents as-is, adding
@@ -53,7 +53,7 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 func TestSystemGit_ListBranches(t *testing.T) {
 	testutil.Chdir(t, testutil.TempDir(t))
 
-	git(t, "init")
+	gitInit(t)
 
 	// master
 	touch(t, "foo")
@@ -104,6 +104,14 @@ func TestSystemGit_ListBranches(t *testing.T) {
 	for b := range wantBranches {
 		t.Errorf("missing branch: %v", b)
 	}
+}
+
+func gitInit(t *testing.T) {
+	t.Helper()
+
+	git(t, "init")
+	git(t, "config", "user.name", "potato")
+	git(t, "config", "user.email", "noreply@example.com")
 }
 
 func git(t *testing.T, args ...string) {
