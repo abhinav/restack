@@ -38,6 +38,12 @@ type fakeEditorConfig struct {
 
 	// Contents to write to the edited file.
 	GiveContents string `json:"giveContents"`
+
+	// Exit code to use.
+	ExitCode int `json:"exitCode"`
+
+	// If set to true, the editor will delete the file before exiting.
+	DeleteFile bool `json:"deleteFile"`
 }
 
 // Build returns the string to use as the editor inside a test.
@@ -79,20 +85,28 @@ func fakeEditorMain(cfgFile string) error {
 	if len(args) == 0 {
 		return errors.New("usage: editor file")
 	}
+	file := args[0]
 
-	got, err := ioutil.ReadFile(args[0])
+	got, err := ioutil.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("read %q: %v", args[0], err)
+		return fmt.Errorf("read %q: %v", file, err)
 	}
 
 	if diff := cmp.Diff(cfg.WantContents, string(got)); len(diff) > 0 {
 		return fmt.Errorf("contents mismatch: (-want, +got)\n%s", diff)
 	}
 
-	if err := ioutil.WriteFile(args[0], []byte(cfg.GiveContents), 0644); err != nil {
+	if err := ioutil.WriteFile(file, []byte(cfg.GiveContents), 0644); err != nil {
 		return fmt.Errorf("write output: %v", err)
 	}
 
+	if cfg.DeleteFile {
+		if err := os.Remove(file); err != nil {
+			return fmt.Errorf("delete file: %v", err)
+		}
+	}
+
+	os.Exit(cfg.ExitCode)
 	return nil
 }
 
@@ -181,6 +195,7 @@ func (r *fakeRestacker) Restack(ctx context.Context, req *Request) error {
 	return r.FailWith
 }
 
+// Handle missing files.
 func TestEdit_MissingFile(t *testing.T) {
 	ctx := context.Background()
 	err := (&Edit{
@@ -197,6 +212,7 @@ func TestEdit_MissingFile(t *testing.T) {
 	errorMustContain(t, err, "no such file")
 }
 
+// Handle failures in restacking the instructions.
 func TestEdit_RestackFailed(t *testing.T) {
 	dir := testutil.TempDir(t)
 	file := filepath.Join(dir, "git-rebase-todo")
@@ -222,6 +238,68 @@ func TestEdit_RestackFailed(t *testing.T) {
 		t.Errorf("edit must fail")
 	}
 	errorMustContain(t, err, "great sadness")
+}
+
+// Handle non-zero codes from editors.
+func TestEdit_EditorFailed(t *testing.T) {
+	dir := testutil.TempDir(t)
+	file := filepath.Join(dir, "git-rebase-todo")
+
+	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
+		t.Fatalf("write temporary file: %v", err)
+	}
+
+	restacker := fakeRestacker{T: t}
+	defer restacker.VerifyRan()
+
+	editor := fakeEditorConfig{ExitCode: 1}
+
+	ctx := context.Background()
+	err := (&Edit{
+		Editor:    editor.Build(t),
+		Path:      file,
+		Restacker: &restacker,
+		Stdin:     new(bytes.Buffer),
+		Stdout:    testutil.NewWriter(t),
+		Stderr:    testutil.NewWriter(t),
+	}).Run(ctx)
+	if err == nil {
+		t.Fatalf("edit must fail")
+	}
+
+	errorMustContain(t, err, "exit status 1")
+}
+
+// Handle failures in renaming if, for example, the file was deleted by the
+// editor.
+func TestEdit_RenameFailed(t *testing.T) {
+	dir := testutil.TempDir(t)
+	file := filepath.Join(dir, "git-rebase-todo")
+
+	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
+		t.Fatalf("write temporary file: %v", err)
+	}
+
+	restacker := fakeRestacker{T: t}
+	defer restacker.VerifyRan()
+
+	editor := fakeEditorConfig{DeleteFile: true}
+
+	ctx := context.Background()
+	err := (&Edit{
+		Editor:    editor.Build(t),
+		Path:      file,
+		Restacker: &restacker,
+		Stdin:     new(bytes.Buffer),
+		Stdout:    testutil.NewWriter(t),
+		Stderr:    testutil.NewWriter(t),
+	}).Run(ctx)
+	if err == nil {
+		t.Fatalf("edit must fail")
+	}
+
+	errorMustContain(t, err, fmt.Sprintf("overwrite %q", file))
+	errorMustContain(t, err, "no such file or directory")
 }
 
 func errorMustContain(t *testing.T, err error, needle string) {

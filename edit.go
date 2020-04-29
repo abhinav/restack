@@ -28,36 +28,18 @@ type Edit struct {
 }
 
 // Run runs the "restack edit" command.
-func (e *Edit) Run(ctx context.Context) error {
-	inFile, err := os.Open(e.Path)
-	if err != nil {
-		return fmt.Errorf("open %q: %v", e.Path, err)
-	}
-
+func (e *Edit) Run(ctx context.Context) (err error) {
 	tempDir, err := ioutil.TempDir("", "restack.")
 	if err != nil {
 		return fmt.Errorf("create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		err = multierr.Append(err, os.RemoveAll(tempDir))
+	}()
 
-	// Need to call the file git-rebase-todo to make sure file-type detection
-	// in different editors works correctly.
-	outFilePath := filepath.Join(tempDir, "git-rebase-todo")
-	outFile, err := os.Create(outFilePath)
+	outFilePath, err := e.restack(ctx, tempDir)
 	if err != nil {
-		return fmt.Errorf("create file %q: %v", outFilePath, err)
-	}
-
-	// TODO: Guess remote name
-	req := Request{RemoteName: "origin", From: inFile, To: outFile}
-	if err := e.Restacker.Restack(ctx, &req); err != nil {
-		err = multierr.Append(err, outFile.Close())
-		err = multierr.Append(err, inFile.Close())
 		return err
-	}
-
-	if err := multierr.Append(outFile.Close(), inFile.Close()); err != nil {
-		return fmt.Errorf("close files: %v", err)
 	}
 
 	// Because GIT_EDITOR is meant to be interpreted by the shell, we need to
@@ -78,4 +60,30 @@ func (e *Edit) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (e *Edit) restack(ctx context.Context, tempDir string) (outfile string, err error) {
+	inFile, err := os.Open(e.Path)
+	if err != nil {
+		return "", fmt.Errorf("open %q: %v", e.Path, err)
+	}
+	defer func() {
+		err = multierr.Append(err, inFile.Close())
+	}()
+
+	// Need to call the file git-rebase-todo to make sure file-type detection
+	// in different editors works correctly.
+	outFilePath := filepath.Join(tempDir, "git-rebase-todo")
+	outFile, err := os.Create(outFilePath)
+	if err != nil {
+		return "", fmt.Errorf("create file %q: %v", outFilePath, err)
+	}
+	defer func() {
+		err = multierr.Append(err, outFile.Close())
+	}()
+
+	// TODO: Guess remote name
+	req := Request{RemoteName: "origin", From: inFile, To: outFile}
+	err = e.Restacker.Restack(ctx, &req)
+	return outFilePath, err
 }
