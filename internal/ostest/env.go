@@ -1,4 +1,4 @@
-package testutil
+package ostest
 
 import "os"
 
@@ -7,7 +7,7 @@ import "os"
 //
 // It automatically restores the previous value, if any, after the test
 // finishes.
-func Setenv(t TestingT, k, v string) {
+func Setenv(t T, k, v string) {
 	t.Helper()
 
 	var cleanup func()
@@ -26,7 +26,7 @@ func Setenv(t TestingT, k, v string) {
 //
 // It automatically restores the previous value, if any, after the test
 // finishes.
-func Unsetenv(t TestingT, k string) {
+func Unsetenv(t T, k string) {
 	t.Helper()
 
 	var cleanup func()

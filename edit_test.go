@@ -10,14 +10,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abhinav/restack/internal/testutil"
+	"github.com/abhinav/restack/internal/iotest"
+	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/google/go-cmp/cmp"
 )
 
 var _noop = "noop\n"
 
 func TestEdit(t *testing.T) {
-	dir := testutil.TempDir(t)
+	dir := iotest.TempDir(t, "edit")
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	if err := ioutil.WriteFile(file, []byte(_noop), 0600); err != nil {
@@ -44,8 +45,8 @@ func TestEdit(t *testing.T) {
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
-		Stdout:    testutil.NewWriter(t),
-		Stderr:    testutil.NewWriter(t),
+		Stdout:    testwriter.New(t),
+		Stderr:    testwriter.New(t),
 	}).Run(ctx)
 
 	if err != nil {
@@ -107,8 +108,8 @@ func TestEdit_MissingFile(t *testing.T) {
 		Path:      "does not exist",
 		Restacker: &fakeRestacker{T: t},
 		Stdin:     new(bytes.Buffer),
-		Stdout:    testutil.NewWriter(t),
-		Stderr:    testutil.NewWriter(t),
+		Stdout:    testwriter.New(t),
+		Stderr:    testwriter.New(t),
 	}).Run(ctx)
 	if err == nil {
 		t.Errorf("edit must fail")
@@ -118,7 +119,7 @@ func TestEdit_MissingFile(t *testing.T) {
 
 // Handle failures in restacking the instructions.
 func TestEdit_RestackFailed(t *testing.T) {
-	dir := testutil.TempDir(t)
+	dir := iotest.TempDir(t, "edit-restack-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	if err := ioutil.WriteFile(file, []byte(_noop), 0600); err != nil {
@@ -135,8 +136,8 @@ func TestEdit_RestackFailed(t *testing.T) {
 			FailWith:  errors.New("great sadness"),
 		},
 		Stdin:  new(bytes.Buffer),
-		Stdout: testutil.NewWriter(t),
-		Stderr: testutil.NewWriter(t),
+		Stdout: testwriter.New(t),
+		Stderr: testwriter.New(t),
 	}).Run(ctx)
 	if err == nil {
 		t.Errorf("edit must fail")
@@ -146,7 +147,7 @@ func TestEdit_RestackFailed(t *testing.T) {
 
 // Handle non-zero codes from editors.
 func TestEdit_EditorFailed(t *testing.T) {
-	dir := testutil.TempDir(t)
+	dir := iotest.TempDir(t, "edit-editor-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
@@ -164,8 +165,8 @@ func TestEdit_EditorFailed(t *testing.T) {
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
-		Stdout:    testutil.NewWriter(t),
-		Stderr:    testutil.NewWriter(t),
+		Stdout:    testwriter.New(t),
+		Stderr:    testwriter.New(t),
 	}).Run(ctx)
 	if err == nil {
 		t.Fatalf("edit must fail")
@@ -177,7 +178,7 @@ func TestEdit_EditorFailed(t *testing.T) {
 // Handle failures in renaming if, for example, the file was deleted by the
 // editor.
 func TestEdit_RenameFailed(t *testing.T) {
-	dir := testutil.TempDir(t)
+	dir := iotest.TempDir(t, "edit-rename-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
@@ -195,8 +196,8 @@ func TestEdit_RenameFailed(t *testing.T) {
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
-		Stdout:    testutil.NewWriter(t),
-		Stderr:    testutil.NewWriter(t),
+		Stdout:    testwriter.New(t),
+		Stderr:    testwriter.New(t),
 	}).Run(ctx)
 	if err == nil {
 		t.Fatalf("edit must fail")

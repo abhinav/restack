@@ -7,11 +7,13 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/abhinav/restack/internal/testutil"
+	"github.com/abhinav/restack/internal/iotest"
+	"github.com/abhinav/restack/internal/ostest"
+	"github.com/abhinav/restack/internal/testwriter"
 )
 
 func TestSystemGit_RebaseHeadName(t *testing.T) {
-	testutil.Chdir(t, testutil.TempDir(t))
+	ostest.Chdir(t, iotest.TempDir(t, "git-rebase-head-name"))
 
 	gitInit(t)
 
@@ -51,7 +53,7 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 }
 
 func TestSystemGit_ListBranches(t *testing.T) {
-	testutil.Chdir(t, testutil.TempDir(t))
+	ostest.Chdir(t, iotest.TempDir(t, "git-list-branches"))
 
 	gitInit(t)
 
@@ -126,8 +128,8 @@ func gitCmd(t *testing.T, args ...string) *exec.Cmd {
 	t.Helper()
 
 	cmd := exec.Command("git", args...)
-	cmd.Stdout = testutil.NewWriter(t)
-	cmd.Stderr = testutil.NewWriter(t)
+	cmd.Stdout = testwriter.New(t)
+	cmd.Stderr = testwriter.New(t)
 	return cmd
 }
 
