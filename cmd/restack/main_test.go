@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/abhinav/restack/internal/testutil"
+	"github.com/abhinav/restack/internal/testwriter"
 )
 
 func TestRun_Version(t *testing.T) {
 	var stdout bytes.Buffer
 	opts := options{
 		Stdout: &stdout,
-		Stderr: testutil.NewWriter(t),
+		Stderr: testwriter.New(t),
 	}
 	err := run(&opts, []string{"-version"})
 	if err != nil {
@@ -46,7 +46,7 @@ func TestRun_CommandErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var stderr bytes.Buffer
 			opts := &options{
-				Stdout: testutil.NewWriter(t),
+				Stdout: testwriter.New(t),
 				Stderr: &stderr,
 			}
 

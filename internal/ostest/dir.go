@@ -1,4 +1,4 @@
-package testutil
+package ostest
 
 import "os"
 
@@ -6,7 +6,7 @@ import "os"
 // of the current test.
 //
 // The old working directory is restored when the test exits.
-func Chdir(t TestingT, dir string) {
+func Chdir(t T, dir string) {
 	t.Helper()
 
 	oldDir, err := os.Getwd()

@@ -8,14 +8,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abhinav/restack/internal/testutil"
+	"github.com/abhinav/restack/internal/iotest"
+	"github.com/abhinav/restack/internal/ostest"
+	"github.com/abhinav/restack/internal/testwriter"
 )
 
 func TestSetup(t *testing.T) {
-	home := testutil.TempDir(t)
-	testutil.Setenv(t, "HOME", home)
+	home := iotest.TempDir(t, "setup")
+	ostest.Setenv(t, "HOME", home)
 
-	twriter := testutil.NewWriter(t)
+	twriter := testwriter.New(t)
 	setup := &Setup{
 		Stdout: twriter,
 		Stderr: twriter,
@@ -54,7 +56,7 @@ func TestSetup_PrintScript(t *testing.T) {
 	setup := &Setup{
 		PrintScript: true,
 		Stdout:      &stdout,
-		Stderr:      testutil.NewWriter(t),
+		Stderr:      testwriter.New(t),
 	}
 
 	ctx := context.Background()
@@ -68,9 +70,9 @@ func TestSetup_PrintScript(t *testing.T) {
 }
 
 func TestSetup_NoHome(t *testing.T) {
-	testutil.Unsetenv(t, "HOME")
+	ostest.Unsetenv(t, "HOME")
 
-	twriter := testutil.NewWriter(t)
+	twriter := testwriter.New(t)
 	setup := &Setup{
 		Stdout: twriter,
 		Stderr: twriter,
