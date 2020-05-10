@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/golang/mock v1.4.1
 	github.com/google/go-cmp v0.4.0
-	github.com/jessevdk/go-flags v1.3.0
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/tcnksm/ghr v0.13.0
 	go.uber.org/multierr v1.5.0
