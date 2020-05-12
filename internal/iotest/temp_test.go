@@ -47,3 +47,38 @@ func TestTempDir(t *testing.T) {
 		t.Errorf("unexpected error %v, expected %v", err, os.ErrNotExist)
 	}
 }
+
+func TestTempFile(t *testing.T) {
+	t.Run("automatically close", func(t *testing.T) {
+		ft := fakeT{T: t}
+
+		file := TempFile(&ft, "foo")
+		if file == nil {
+			t.Fatal("expected a file")
+		}
+
+		info, err := os.Stat(file.Name())
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !info.Mode().IsRegular() {
+			t.Errorf("expected file, got %v", info.Mode())
+		}
+
+		ft.runCleanup()
+
+		if info, err = os.Stat(file.Name()); err == nil {
+			t.Errorf("expected error, got %v", info.Mode())
+		} else if !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("unexpected error %v, expected %v", err, os.ErrNotExist)
+		}
+	})
+
+	t.Run("already closed", func(t *testing.T) {
+		f := TempFile(t, "foo")
+		if err := f.Close(); err != nil {
+			t.Fatalf("could not close %q: %v", f.Name(), err)
+		}
+	})
+}

@@ -1,6 +1,7 @@
 package iotest
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 )
@@ -30,4 +31,31 @@ func TempDir(t T, prefix string) string {
 	})
 
 	return dir
+}
+
+// TempFile creates a new temporary file inside the current test context.
+//
+// It deletes the file when the test finishes.
+func TempFile(t T, prefix string) *os.File {
+	t.Helper()
+
+	f, err := ioutil.TempFile("", prefix)
+	if err != nil {
+		t.Fatalf("make tempfile: %v", err)
+	}
+	name := f.Name()
+
+	t.Cleanup(func() {
+		if err := f.Close(); err != nil {
+			if !errors.Is(err, os.ErrClosed) {
+				t.Errorf("close tempfile %q: %v", name, err)
+			}
+		}
+
+		if err := os.Remove(name); err != nil {
+			t.Errorf("delete tempfile %q: %v", name, err)
+		}
+	})
+
+	return f
 }
