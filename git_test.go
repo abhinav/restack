@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/abhinav/restack/internal/editorfake"
 	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
@@ -20,8 +21,8 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 	// Make this git repository use our fake editor to edit rebase
 	// instructions. The fake editor will leave the contents as-is, adding
 	// a "break" instruction to the top.
-	editor := fakeEditorConfig{AddPrefix: "break\n"}
-	git(t, "config", "sequence.editor", editor.Build(t))
+	editor := editorfake.New(t, editorfake.AddPrefix("break\n"))
+	git(t, "config", "sequence.editor", editor)
 
 	touch(t, "foo")
 	git(t, "add", "foo")

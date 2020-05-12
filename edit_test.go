@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/abhinav/restack/internal/editorfake"
 	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/google/go-cmp/cmp"
@@ -34,14 +35,14 @@ func TestEdit(t *testing.T) {
 	defer restacker.VerifyRan()
 
 	editorOutput := "x echo hello to you too"
-	editor := fakeEditorConfig{
-		WantContents: restackerOutput,
-		GiveContents: editorOutput,
-	}
+	editor := editorfake.New(t,
+		editorfake.WantContents(restackerOutput),
+		editorfake.GiveContents(editorOutput),
+	)
 
 	ctx := context.Background()
 	err := (&Edit{
-		Editor:    editor.Build(t),
+		Editor:    editor,
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
@@ -157,11 +158,11 @@ func TestEdit_EditorFailed(t *testing.T) {
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()
 
-	editor := fakeEditorConfig{ExitCode: 1}
+	editor := editorfake.New(t, editorfake.ExitCode(1))
 
 	ctx := context.Background()
 	err := (&Edit{
-		Editor:    editor.Build(t),
+		Editor:    editor,
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
@@ -188,11 +189,11 @@ func TestEdit_RenameFailed(t *testing.T) {
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()
 
-	editor := fakeEditorConfig{DeleteFile: true}
+	editor := editorfake.New(t, editorfake.DeleteFile())
 
 	ctx := context.Background()
 	err := (&Edit{
-		Editor:    editor.Build(t),
+		Editor:    editor,
 		Path:      file,
 		Restacker: &restacker,
 		Stdin:     new(bytes.Buffer),
