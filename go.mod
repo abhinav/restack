@@ -9,5 +9,5 @@ require (
 	github.com/tcnksm/ghr v0.13.0
 	go.uber.org/multierr v1.5.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
-	honnef.co/go/tools v0.0.1-2020.1.3
+	honnef.co/go/tools v0.3.0-0.dev
 )
