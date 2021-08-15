@@ -1,7 +1,7 @@
 Releases
 ========
 
-v0.4.0 (unreleased)
+v0.4.0 (2021-08-15)
 -------------------
 
 -   Simplify command line argument parsing.

@@ -19,11 +19,11 @@ archive and put the binaries somewhere on your `$PATH`.
 
 For example, if you have `$HOME/bin` on your `$PATH`,
 
-    OS=$(go env GOOS)
-    ARCH=$(go env GOARCH)
-    VERSION=v0.3.1
-    URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack.$VERSION.$OS.$ARCH.tar.gz"
-    curl -L "$URL" | tar xzv -C ~/bin
+    OS=$(uname -s)
+    ARCH=$(uname -m)
+    VERSION=v0.4.0
+    URL="https://github.com/abhinav/restack/releases/download/$VERSION/restack_${VERSION}_${OS}_${ARCH}.tar.gz"
+    curl -L "$URL" | tar xzv -C ~/bin restack
 
 Build From Source
 -----------------
@@ -31,7 +31,7 @@ Build From Source
 If you have Go installed, you can install `restack` using the following
 command.
 
-    $ go get -u github.com/abhinav/restack/cmd/restack
+    $ go install github.com/abhinav/restack/cmd/restack@latest
 
 Setup
 =====
