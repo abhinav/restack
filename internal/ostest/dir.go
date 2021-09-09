@@ -1,26 +1,29 @@
 package ostest
 
-import "os"
+import (
+	"os"
+
+	"github.com/abhinav/restack/internal/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
 // Chdir changes the working directory to the given directory for the duration
 // of the current test.
 //
 // The old working directory is restored when the test exits.
-func Chdir(t T, dir string) {
+func Chdir(t test.T, dir string) {
 	t.Helper()
 
 	oldDir, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("get cwd: %v", err)
-	}
+	require.NoError(t, err, "get cwd")
 
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir %q: %v", dir, err)
-	}
+	require.NoError(t,
+		os.Chdir(dir), "chdir %q", dir)
 
 	t.Cleanup(func() {
-		if err := os.Chdir(oldDir); err != nil {
-			t.Errorf("chdir old %q: %v", oldDir)
-		}
+		assert.NoError(t,
+			os.Chdir(oldDir),
+			"chdir to old %q", oldDir)
 	})
 }

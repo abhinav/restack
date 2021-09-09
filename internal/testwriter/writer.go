@@ -3,23 +3,19 @@ package testwriter
 import (
 	"bytes"
 	"io"
-)
 
-// T is a subset of the testing.T interface.
-type T interface {
-	Helper()
-	Logf(string, ...interface{})
-}
+	"github.com/abhinav/restack/internal/test"
+)
 
 // Writer writes output to the given testing.T.
 type Writer struct {
-	t T
+	t test.T
 }
 
 var _ io.Writer = (*Writer)(nil)
 
 // New builds a new test Writer.
-func New(t T) *Writer {
+func New(t test.T) *Writer {
 	return &Writer{t: t}
 }
 

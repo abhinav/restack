@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/abhinav/restack/internal/editorfake"
 	"github.com/abhinav/restack/internal/iotest"
+	"github.com/abhinav/restack/internal/test"
 	"github.com/abhinav/restack/internal/testwriter"
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var _noop = "noop\n"
@@ -22,9 +23,9 @@ func TestEdit(t *testing.T) {
 	dir := iotest.TempDir(t, "edit")
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	if err := ioutil.WriteFile(file, []byte(_noop), 0600); err != nil {
-		t.Fatalf("write temporary file: %v", err)
-	}
+	require.NoError(t,
+		ioutil.WriteFile(file, []byte(_noop), 0600),
+		"write temporary file")
 
 	restackerOutput := "x echo hello world"
 	restacker := fakeRestacker{
@@ -49,23 +50,17 @@ func TestEdit(t *testing.T) {
 		Stdout:    testwriter.New(t),
 		Stderr:    testwriter.New(t),
 	}).Run(ctx)
-
-	if err != nil {
-		t.Errorf("edit failed: %v", err)
-	}
+	require.NoError(t, err, "edit failed")
 
 	gotOutput, err := ioutil.ReadFile(file)
-	if err != nil {
-		t.Fatalf("read output: %v", err)
-	}
+	require.NoError(t, err, "read output")
 
-	if diff := cmp.Diff(editorOutput, string(gotOutput)); len(diff) > 0 {
-		t.Errorf("output mismatch: (-want, +got):\n%s", diff)
-	}
+	assert.Equal(t, editorOutput, string(gotOutput),
+		"output mismatch")
 }
 
 type fakeRestacker struct {
-	T *testing.T
+	T test.T
 
 	ran        bool
 	WantInput  string
@@ -74,9 +69,7 @@ type fakeRestacker struct {
 }
 
 func (r *fakeRestacker) VerifyRan() {
-	if !r.ran {
-		r.T.Errorf("restack never executed")
-	}
+	assert.True(r.T, r.ran, "restack never executed")
 }
 
 func (r *fakeRestacker) Restack(ctx context.Context, req *Request) error {
@@ -84,17 +77,14 @@ func (r *fakeRestacker) Restack(ctx context.Context, req *Request) error {
 	r.ran = true
 
 	gotInput, err := ioutil.ReadAll(req.From)
-	if err != nil {
-		t.Errorf("read input: %v", err)
+	if !assert.NoError(t, err, "read input") {
 		return err
 	}
 
-	if diff := cmp.Diff(r.WantInput, string(gotInput)); len(diff) > 0 {
-		t.Errorf("input mismatch: (-want, +got):\n%s", diff)
-	}
+	assert.Equal(t, r.WantInput, string(gotInput), "input mismatch")
 
-	if _, err := req.To.Write([]byte(r.GiveOutput)); err != nil {
-		t.Errorf("write output: %v", err)
+	_, err = req.To.Write([]byte(r.GiveOutput))
+	if !assert.NoError(t, err, "write output") {
 		return err
 	}
 
@@ -112,10 +102,8 @@ func TestEdit_MissingFile(t *testing.T) {
 		Stdout:    testwriter.New(t),
 		Stderr:    testwriter.New(t),
 	}).Run(ctx)
-	if err == nil {
-		t.Errorf("edit must fail")
-	}
-	errorMustContain(t, err, "no such file")
+	assert.Error(t, err, "edit must fail")
+	assert.Contains(t, err.Error(), "no such file")
 }
 
 // Handle failures in restacking the instructions.
@@ -123,9 +111,9 @@ func TestEdit_RestackFailed(t *testing.T) {
 	dir := iotest.TempDir(t, "edit-restack-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	if err := ioutil.WriteFile(file, []byte(_noop), 0600); err != nil {
-		t.Fatalf("write temporary file: %v", err)
-	}
+	require.NoError(t,
+		ioutil.WriteFile(file, []byte(_noop), 0600),
+		"write temporary file")
 
 	ctx := context.Background()
 	err := (&Edit{
@@ -140,10 +128,8 @@ func TestEdit_RestackFailed(t *testing.T) {
 		Stdout: testwriter.New(t),
 		Stderr: testwriter.New(t),
 	}).Run(ctx)
-	if err == nil {
-		t.Errorf("edit must fail")
-	}
-	errorMustContain(t, err, "great sadness")
+	assert.Error(t, err, "edit must fail")
+	assert.Contains(t, err.Error(), "great sadness")
 }
 
 // Handle non-zero codes from editors.
@@ -151,9 +137,9 @@ func TestEdit_EditorFailed(t *testing.T) {
 	dir := iotest.TempDir(t, "edit-editor-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
-		t.Fatalf("write temporary file: %v", err)
-	}
+	require.NoError(t,
+		ioutil.WriteFile(file, []byte{}, 0600),
+		"write temporary file")
 
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()
@@ -169,11 +155,8 @@ func TestEdit_EditorFailed(t *testing.T) {
 		Stdout:    testwriter.New(t),
 		Stderr:    testwriter.New(t),
 	}).Run(ctx)
-	if err == nil {
-		t.Fatalf("edit must fail")
-	}
-
-	errorMustContain(t, err, "exit status 1")
+	assert.Error(t, err, "edit must fail")
+	assert.Contains(t, err.Error(), "exit status 1")
 }
 
 // Handle failures in renaming if, for example, the file was deleted by the
@@ -182,9 +165,9 @@ func TestEdit_RenameFailed(t *testing.T) {
 	dir := iotest.TempDir(t, "edit-rename-fail")
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	if err := ioutil.WriteFile(file, []byte{}, 0600); err != nil {
-		t.Fatalf("write temporary file: %v", err)
-	}
+	require.NoError(t,
+		ioutil.WriteFile(file, []byte{}, 0600),
+		"write temporary file")
 
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()
@@ -200,18 +183,7 @@ func TestEdit_RenameFailed(t *testing.T) {
 		Stdout:    testwriter.New(t),
 		Stderr:    testwriter.New(t),
 	}).Run(ctx)
-	if err == nil {
-		t.Fatalf("edit must fail")
-	}
-
-	errorMustContain(t, err, fmt.Sprintf("overwrite %q", file))
-	errorMustContain(t, err, "no such file or directory")
-}
-
-func errorMustContain(t *testing.T, err error, needle string) {
-	t.Helper()
-
-	if !strings.Contains(err.Error(), needle) {
-		t.Errorf("error %v must contain %q", err, needle)
-	}
+	assert.Error(t, err, "edit must fail")
+	assert.Contains(t, err.Error(), fmt.Sprintf("overwrite %q", file))
+	assert.Contains(t, err.Error(), "no such file or directory")
 }

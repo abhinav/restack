@@ -2,11 +2,10 @@ package main
 
 import (
 	"bytes"
-	"errors"
-	"strings"
 	"testing"
 
 	"github.com/abhinav/restack/internal/testwriter"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRun_Version(t *testing.T) {
@@ -15,14 +14,9 @@ func TestRun_Version(t *testing.T) {
 		Stdout: &stdout,
 		Stderr: testwriter.New(t),
 	}
-	err := run(&opts, []string{"-version"})
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	if stdout.Len() == 0 {
-		t.Errorf("stdout should contain version information")
-	}
+	assert.NoError(t, run(&opts, []string{"-version"}))
+	assert.NotEmpty(t, stdout.String(),
+		"stdout should contain version information")
 }
 
 func TestRun_CommandErrors(t *testing.T) {
@@ -50,13 +44,9 @@ func TestRun_CommandErrors(t *testing.T) {
 				Stderr: &stderr,
 			}
 
-			if err := run(opts, tt.give); !errors.Is(err, tt.want) {
-				t.Errorf("unexpected error: got %v, want %v", err, tt.want)
-			}
-
-			if stderr.Len() == 0 {
-				t.Errorf("stderr should contain usage")
-			}
+			assert.ErrorIs(t, run(opts, tt.give), tt.want)
+			assert.NotEmpty(t, stderr.String(),
+				"stderr should contain usage")
 		})
 	}
 }
@@ -85,10 +75,7 @@ func TestNewSetup_Errors(t *testing.T) {
 				Stdout: new(bytes.Buffer),
 				Stderr: new(bytes.Buffer),
 			}, tt.give)
-
-			if !strings.Contains(err.Error(), tt.want) {
-				t.Errorf("unexpected error: got %v, should contain %q", err, tt.want)
-			}
+			assert.Contains(t, err.Error(), tt.want)
 		})
 	}
 }
@@ -100,17 +87,9 @@ func TestNewSetup(t *testing.T) {
 		Stdout: &stdout,
 		Stderr: &stderr,
 	}, nil)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	if stdout.Len() > 0 {
-		t.Errorf("stdout should be empty, got:\n%s", stdout.String())
-	}
-
-	if stderr.Len() > 0 {
-		t.Errorf("stderr should be empty, got:\n%s", stderr.String())
-	}
+	assert.NoError(t, err)
+	assert.Empty(t, stdout.String(), "stdout should be empty")
+	assert.Empty(t, stderr.String(), "stderr should be empty")
 }
 
 func TestNewEdit_EditorParsing(t *testing.T) {
@@ -178,21 +157,10 @@ func TestNewEdit_EditorParsing(t *testing.T) {
 				Stderr: &stderr,
 				Getenv: func(k string) string { return env[k] },
 			}, args)
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-
-			if got.Editor != tt.want {
-				t.Errorf("unexpected editor %q, want %q", got.Editor, tt.want)
-			}
-
-			if stdout.Len() > 0 {
-				t.Errorf("stdout should be empty, got:\n%s", stdout.String())
-			}
-
-			if stderr.Len() > 0 {
-				t.Errorf("stderr should be empty, got:\n%s", stderr.String())
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got.Editor, "unexpected editor")
+			assert.Empty(t, stdout.String(), "stdout should be empty")
+			assert.Empty(t, stderr.String(), "stderr should be empty")
 		})
 	}
 }
@@ -231,19 +199,12 @@ func TestNewEdit_FileParsing(t *testing.T) {
 			}, tt.args)
 
 			if tt.wantErr != nil {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("unexpected error: %v, want %v", err, tt.wantErr)
-				}
+				assert.ErrorIs(t, err, tt.wantErr)
 				return
 			}
 
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-
-			if tt.want != got.Path {
-				t.Errorf("unexpected path %q, want %q", got.Path, tt.want)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got.Path, "unexpected path")
 		})
 	}
 }

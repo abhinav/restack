@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/abhinav/restack/internal/test"
+	"github.com/stretchr/testify/assert"
 )
 
 type fakeT struct {
+	test.T
+
 	buff bytes.Buffer
 }
 
@@ -26,8 +29,5 @@ func TestWriter(t *testing.T) {
 	fmt.Fprintln(w, "qux")
 
 	want := "foo\nbar\nbaz\nqux\n"
-	if diff := cmp.Diff(want, ft.buff.String()); len(diff) > 0 {
-		t.Errorf("logged output mismatch: (-want, +got):\n%s", diff)
-	}
-
+	assert.Equal(t, want, ft.buff.String(), "logged output mismatch")
 }

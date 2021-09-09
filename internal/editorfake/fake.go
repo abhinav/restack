@@ -15,6 +15,8 @@ import (
 	"os"
 
 	"github.com/abhinav/restack/internal/iotest"
+	"github.com/abhinav/restack/internal/test"
+	"github.com/stretchr/testify/require"
 )
 
 // TryMain is the entry point for the fake editor. It runs the editor behavior
@@ -95,25 +97,16 @@ type config struct {
 	Ops []opConfig
 }
 
-// T is a subset of the testing.T interface.
-type T interface {
-	Helper()
-	Cleanup(func())
-	Fatalf(string, ...interface{})
-	Errorf(string, ...interface{})
-}
-
 // New builds a new fake editor that runs the provided operations.
 //
 // It returns a shell command that, when invoked, acts like a valid editor.
-func New(t T, ops ...Option) string {
+func New(t test.T, ops ...Option) string {
 	// Detect invocation of editorfake.New inside an editorfake. This
 	// happens if we don't install this in TestMain.
-	if cfgFile := os.Getenv("TEST_FAKE_EDITOR_CONFIG"); len(cfgFile) > 0 {
-		t.Fatalf(
-			"already inside a test editor (TEST_FAKE_EDITOR_CONFIG=%v):\n"+
-				"did you forget to call editorfake.TryMain?", cfgFile)
-	}
+	cfgFile := os.Getenv("TEST_FAKE_EDITOR_CONFIG")
+	require.Empty(t, cfgFile,
+		"already inside a test editor (TEST_FAKE_EDITOR_CONFIG=%v):\n"+
+			"did you forget to call editorfake.TryMain?", cfgFile)
 
 	var cfg config
 	for _, op := range ops {
@@ -124,16 +117,13 @@ func New(t T, ops ...Option) string {
 	}
 
 	testExe, err := os.Executable()
-	if err != nil {
-		t.Fatalf("determine test executable: %v", err)
-	}
+	require.NoError(t, err, "determine test executable")
 
 	f := iotest.TempFile(t, "fake-editor-config")
 	defer f.Close()
 
-	if err := json.NewEncoder(f).Encode(cfg); err != nil {
-		t.Fatalf("encode fake editor config: %v", err)
-	}
+	require.NoError(t, json.NewEncoder(f).Encode(cfg),
+		"encode fake editor config")
 
 	return fmt.Sprintf("TEST_FAKE_EDITOR_CONFIG=%v %v", f.Name(), testExe)
 }

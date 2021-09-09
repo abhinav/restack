@@ -11,6 +11,8 @@ import (
 	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetup(t *testing.T) {
@@ -24,31 +26,23 @@ func TestSetup(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	if err := setup.Run(ctx); err != nil {
-		t.Fatalf("setup must not fail")
-	}
+	require.NoError(t, setup.Run(ctx), "setup must not fail")
 
 	scriptPath := filepath.Join(home, ".restack/edit.sh")
 	scriptInfo, err := os.Stat(scriptPath)
-	if err != nil {
-		t.Fatalf("want edit script: %v", err)
-	}
+	require.NoError(t, err, "want edit script: %v", scriptPath)
 
-	if mode := scriptInfo.Mode(); mode&0100 == 0 {
-		t.Errorf("edit.sh: want executable, got %v", mode)
-	}
+	mode := scriptInfo.Mode()
+	assert.NotZero(t, mode&0100, "edit.sh: want executable, got %v", mode)
 
 	cmd := exec.Command("git", "config", "--global", "sequence.editor")
 	cmd.Stderr = twriter
 	out, err := cmd.Output()
-	if err != nil {
-		t.Fatalf("git config check: %v", err)
-	}
+	require.NoError(t, err, "git config check")
 	out = bytes.TrimSpace(out)
 
-	if string(out) != scriptPath {
-		t.Errorf("git sequence.editor = %q, want %q", out, scriptPath)
-	}
+	assert.Equal(t, string(out), scriptPath,
+		"git sequence.editor should match")
 }
 
 func TestSetup_PrintScript(t *testing.T) {
@@ -60,13 +54,10 @@ func TestSetup_PrintScript(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	if err := setup.Run(ctx); err != nil {
-		t.Fatalf("Setup failed unexpectedly")
-	}
+	require.NoError(t, setup.Run(ctx), "setup failed")
 
-	if stdout.Len() == 0 {
-		t.Errorf("setup --print-edit-script got empty stdout")
-	}
+	assert.NotEmpty(t, stdout.String(),
+		"setup --print-edit-script should not be empty")
 }
 
 func TestSetup_NoHome(t *testing.T) {
@@ -79,7 +70,5 @@ func TestSetup_NoHome(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	if err := setup.Run(ctx); err == nil {
-		t.Errorf("setup must fail")
-	}
+	require.Error(t, setup.Run(ctx), "setup must fail")
 }

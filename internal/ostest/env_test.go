@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetenv(t *testing.T) {
@@ -14,15 +16,13 @@ func TestSetenv(t *testing.T) {
 		ft := fakeT{T: t}
 		Setenv(&ft, name, "FOO")
 
-		if got := os.Getenv(name); got != "FOO" {
-			t.Errorf("envvar mismatch %q=%q, want %q", name, got, "FOO")
-		}
+		assert.Equal(t, "FOO", os.Getenv(name),
+			"envvar %q mismatch", name)
 
 		ft.runCleanups()
 
-		if got, ok := os.LookupEnv(name); ok || len(got) > 0 {
-			t.Errorf("envvar should be unset, got %q=%q", name, got)
-		}
+		got, ok := os.LookupEnv(name)
+		assert.False(t, ok, "envvar %q must be unset, got %q", name, got)
 	})
 
 	t.Run("previous value", func(t *testing.T) {
@@ -34,15 +34,13 @@ func TestSetenv(t *testing.T) {
 		ft := fakeT{T: t}
 		Setenv(&ft, name, "BAR")
 
-		if got := os.Getenv(name); got != "BAR" {
-			t.Errorf("envvar mismatch %q=%q, want %q", name, got, "BAR")
-		}
+		assert.Equal(t, "BAR", os.Getenv(name),
+			"envvar %q mismatch", name)
 
 		ft.runCleanups()
 
-		if got := os.Getenv(name); got != "FOO" {
-			t.Errorf("envvar mismatch %q=%q, want %q", name, got, "FOO")
-		}
+		assert.Equal(t, "FOO", os.Getenv(name),
+			"envvar %q mismatch after cleanup", name)
 	})
 }
 
@@ -55,13 +53,11 @@ func TestUnsetenv(t *testing.T) {
 	ft := fakeT{T: t}
 	Unsetenv(&ft, name)
 
-	if got, ok := os.LookupEnv(name); ok || len(got) > 0 {
-		t.Errorf("envvar should be unset, got %q=%q", name, got)
-	}
+	got, ok := os.LookupEnv(name)
+	assert.False(t, ok, "envvar %q should be unset, got %q", name, got)
 
 	ft.runCleanups()
 
-	if got := os.Getenv(name); got != "FOO" {
-		t.Errorf("envvar mismatch %q=%q, want %q", name, got, "FOO")
-	}
+	assert.Equal(t, "FOO", os.Getenv(name),
+		"envvar %q mismatch after cleanup", name)
 }

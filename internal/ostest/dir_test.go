@@ -6,39 +6,32 @@ import (
 	"testing"
 
 	"github.com/abhinav/restack/internal/iotest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChdir(t *testing.T) {
 	old, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("get cwd: %v", err)
-	}
+	require.NoError(t, err, "get cwd")
 
 	tempdir := iotest.TempDir(t, "chdir")
 
 	// On macOS, tempdir may be a symlink that reports a different working
 	// directory once Chdir-ed into.
-	if d, err := filepath.EvalSymlinks(tempdir); err != nil {
-		t.Fatalf("unable to evaluate symlink %q: %v", tempdir, err)
-	} else {
-		tempdir = d
-	}
+	d, err := filepath.EvalSymlinks(tempdir)
+	require.NoError(t, err, "unable to evaluate symlink %q", tempdir)
+	tempdir = d
 
 	ft := fakeT{T: t}
 	Chdir(&ft, tempdir)
 
-	if cwd, err := os.Getwd(); err != nil {
-		t.Fatalf("get cwd: %v", err)
-	} else if cwd != tempdir {
-		t.Errorf("unexpected cwd after Chdir %v, want %v", cwd, tempdir)
-	}
+	cwd, err := os.Getwd()
+	require.NoError(t, err, "get cwd")
+	assert.Equal(t, tempdir, cwd, "unexpected cwd after Chdir")
 
 	ft.runCleanups()
 
-	if cwd, err := os.Getwd(); err != nil {
-		t.Fatalf("get cwd: %v", err)
-	} else if cwd != old {
-		t.Errorf("unexpected cwd after Chdir %v, want %v", cwd, old)
-	}
-
+	cwd, err = os.Getwd()
+	require.NoError(t, err, "get cwd")
+	assert.Equal(t, old, cwd, "unexpected cwd after Chdir cleanup")
 }
