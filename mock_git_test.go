@@ -6,34 +6,35 @@ package restack
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockGit is a mock of Git interface
+// MockGit is a mock of Git interface.
 type MockGit struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitMockRecorder
 }
 
-// MockGitMockRecorder is the mock recorder for MockGit
+// MockGitMockRecorder is the mock recorder for MockGit.
 type MockGitMockRecorder struct {
 	mock *MockGit
 }
 
-// NewMockGit creates a new mock instance
+// NewMockGit creates a new mock instance.
 func NewMockGit(ctrl *gomock.Controller) *MockGit {
 	mock := &MockGit{ctrl: ctrl}
 	mock.recorder = &MockGitMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGit) EXPECT() *MockGitMockRecorder {
 	return m.recorder
 }
 
-// ListBranches mocks base method
+// ListBranches mocks base method.
 func (m *MockGit) ListBranches(arg0 context.Context) ([]Branch, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListBranches", arg0)
@@ -42,13 +43,13 @@ func (m *MockGit) ListBranches(arg0 context.Context) ([]Branch, error) {
 	return ret0, ret1
 }
 
-// ListBranches indicates an expected call of ListBranches
+// ListBranches indicates an expected call of ListBranches.
 func (mr *MockGitMockRecorder) ListBranches(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBranches", reflect.TypeOf((*MockGit)(nil).ListBranches), arg0)
 }
 
-// RebaseHeadName mocks base method
+// RebaseHeadName mocks base method.
 func (m *MockGit) RebaseHeadName(arg0 context.Context) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RebaseHeadName", arg0)
@@ -57,7 +58,7 @@ func (m *MockGit) RebaseHeadName(arg0 context.Context) (string, error) {
 	return ret0, ret1
 }
 
-// RebaseHeadName indicates an expected call of RebaseHeadName
+// RebaseHeadName indicates an expected call of RebaseHeadName.
 func (mr *MockGitMockRecorder) RebaseHeadName(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RebaseHeadName", reflect.TypeOf((*MockGit)(nil).RebaseHeadName), arg0)

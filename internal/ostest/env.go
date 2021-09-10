@@ -1,13 +1,17 @@
 package ostest
 
-import "os"
+import (
+	"os"
+
+	"github.com/abhinav/restack/internal/test"
+)
 
 // Setenv changes an environment variable's value for the duration of the
 // current test.
 //
 // It automatically restores the previous value, if any, after the test
 // finishes.
-func Setenv(t T, k, v string) {
+func Setenv(t test.T, k, v string) {
 	t.Helper()
 
 	var cleanup func()
@@ -26,7 +30,7 @@ func Setenv(t T, k, v string) {
 //
 // It automatically restores the previous value, if any, after the test
 // finishes.
-func Unsetenv(t T, k string) {
+func Unsetenv(t test.T, k string) {
 	t.Helper()
 
 	var cleanup func()

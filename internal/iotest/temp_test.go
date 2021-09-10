@@ -1,9 +1,11 @@
 package iotest
 
 import (
-	"errors"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type fakeT struct {
@@ -26,26 +28,19 @@ func TestTempDir(t *testing.T) {
 	ft := fakeT{T: t}
 
 	dir := TempDir(&ft, "foo")
-	if len(dir) == 0 {
-		t.Fatal("expected a directory")
-	}
+	assert.NotEmpty(t, dir, "expected a directory")
 
 	info, err := os.Stat(dir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
-	if !info.IsDir() {
-		t.Errorf("expected directory, got %v", info.Mode())
-	}
+	assert.True(t, info.IsDir(),
+		"expected directory, got %v", info.Mode())
 
 	ft.runCleanup()
 
-	if info, err = os.Stat(dir); err == nil {
-		t.Errorf("expected error, got %v", info.Mode())
-	} else if !errors.Is(err, os.ErrNotExist) {
-		t.Errorf("unexpected error %v, expected %v", err, os.ErrNotExist)
-	}
+	info, err = os.Stat(dir)
+	assert.ErrorIs(t, err, os.ErrNotExist,
+		"directory should not exist after cleanup, got %v", info)
 }
 
 func TestTempFile(t *testing.T) {
@@ -53,32 +48,24 @@ func TestTempFile(t *testing.T) {
 		ft := fakeT{T: t}
 
 		file := TempFile(&ft, "foo")
-		if file == nil {
-			t.Fatal("expected a file")
-		}
+		require.NotNil(t, file, "expected a file")
 
 		info, err := os.Stat(file.Name())
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		require.NoError(t, err)
 
-		if !info.Mode().IsRegular() {
-			t.Errorf("expected file, got %v", info.Mode())
-		}
+		mode := info.Mode()
+		assert.True(t, mode.IsRegular(),
+			"expected file, got %v", mode)
 
 		ft.runCleanup()
 
-		if info, err = os.Stat(file.Name()); err == nil {
-			t.Errorf("expected error, got %v", info.Mode())
-		} else if !errors.Is(err, os.ErrNotExist) {
-			t.Errorf("unexpected error %v, expected %v", err, os.ErrNotExist)
-		}
+		info, err = os.Stat(file.Name())
+		assert.ErrorIs(t, err, os.ErrNotExist,
+			"file should not exist after cleanup, got %v", info)
 	})
 
 	t.Run("already closed", func(t *testing.T) {
 		f := TempFile(t, "foo")
-		if err := f.Close(); err != nil {
-			t.Fatalf("could not close %q: %v", f.Name(), err)
-		}
+		require.NoError(t, f.Close(), "close %q", f.Name())
 	})
 }

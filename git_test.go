@@ -11,9 +11,12 @@ import (
 	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSystemGit_RebaseHeadName(t *testing.T) {
+	ostest.Setenv(t, "HOME", t.TempDir())
 	ostest.Chdir(t, iotest.TempDir(t, "git-rebase-head-name"))
 
 	gitInit(t)
@@ -44,16 +47,13 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 
 	sg := SystemGit{Getenv: os.Getenv}
 	branch, err := sg.RebaseHeadName(ctx)
-	if err != nil {
-		t.Fatalf("determine rebase head name: %v", err)
-	}
+	require.NoError(t, err, "determine rebase head name")
 
-	if branch != "feature" {
-		t.Errorf("unexpected head: got %q, want %q", branch, "feature")
-	}
+	assert.Equal(t, "feature", branch, "unexpected head")
 }
 
 func TestSystemGit_ListBranches(t *testing.T) {
+	ostest.Setenv(t, "HOME", t.TempDir())
 	ostest.Chdir(t, iotest.TempDir(t, "git-list-branches"))
 
 	gitInit(t)
@@ -85,9 +85,7 @@ func TestSystemGit_ListBranches(t *testing.T) {
 
 	sg := SystemGit{Getenv: os.Getenv}
 	bs, err := sg.ListBranches(ctx)
-	if err != nil {
-		t.Fatalf("list branches: %v", err)
-	}
+	require.NoError(t, err, "list branches")
 
 	wantBranches := map[string]struct{}{
 		"master":   {},
@@ -97,16 +95,13 @@ func TestSystemGit_ListBranches(t *testing.T) {
 	}
 
 	for _, b := range bs {
-		if _, ok := wantBranches[b.Name]; !ok {
-			t.Errorf("unexpected branch: %v (%v)", b.Name, b.Hash)
-		} else {
+		_, ok := wantBranches[b.Name]
+		if assert.True(t, ok, "unexpected branch: %v (%v)", b.Name, b.Hash) {
 			delete(wantBranches, b.Name)
 		}
 	}
 
-	for b := range wantBranches {
-		t.Errorf("missing branch: %v", b)
-	}
+	assert.Empty(t, wantBranches, "missing branches")
 }
 
 func gitInit(t *testing.T) {
@@ -120,9 +115,8 @@ func gitInit(t *testing.T) {
 func git(t *testing.T, args ...string) {
 	t.Helper()
 
-	if err := gitCmd(t, args...).Run(); err != nil {
-		t.Fatalf("git %q: %v", args, err)
-	}
+	require.NoError(t, gitCmd(t, args...).Run(),
+		"git %q", args)
 }
 
 func gitCmd(t *testing.T, args ...string) *exec.Cmd {
@@ -138,8 +132,8 @@ func touch(t *testing.T, paths ...string) {
 	t.Helper()
 
 	for _, path := range paths {
-		if err := ioutil.WriteFile(path, []byte{}, 0644); err != nil {
-			t.Fatalf("touch %q: %v", path, err)
-		}
+		require.NoError(t,
+			ioutil.WriteFile(path, []byte{}, 0644),
+			"touch %q", path)
 	}
 }

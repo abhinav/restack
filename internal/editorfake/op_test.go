@@ -7,21 +7,22 @@ import (
 	"testing"
 
 	"github.com/abhinav/restack/internal/iotest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWantContents(t *testing.T) {
 	t.Run("match", func(t *testing.T) {
 		s := state{Contents: "foo"}
-		if err := WantContents("foo").run(&s); err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+		assert.NoError(t, WantContents("foo").run(&s),
+			`"foo" should match itself`)
 	})
 
 	t.Run("mismatch", func(t *testing.T) {
 		s := state{Contents: "bar"}
-		if err := WantContents("foo").run(&s); err == nil {
-			t.Error(`expected error on matching "foo" and "bar"`)
-		}
+		assert.Error(t,
+			WantContents("foo").run(&s),
+			`expected error on matching "foo" and "bar"`)
 	})
 }
 
@@ -29,46 +30,29 @@ func TestGiveContents(t *testing.T) {
 	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
 
 	s := state{Path: file}
-	if err := GiveContents("foo").run(&s); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t,
+		GiveContents("foo").run(&s))
 
 	got, err := ioutil.ReadFile(file)
-	if err != nil {
-		t.Fatalf("read %q: %v", file, err)
-	}
+	require.NoError(t, err, "read %q", file)
 
 	want := "foo"
-	if string(got) != want {
-		t.Errorf("file contents mismatch: want %q, ot %q", want, got)
-	}
-
-	if s.Contents != want {
-		t.Errorf("state.Contents mismatch: want %q, ot %q", want, got)
-	}
+	assert.Equal(t, want, string(got), "file contents mismatch")
+	assert.Equal(t, want, s.Contents, "state.Contents mismatch")
 }
 
 func TestAddPrefix(t *testing.T) {
 	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
 
 	s := state{Path: file, Contents: "foo"}
-	if err := AddPrefix("bar").run(&s); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, AddPrefix("bar").run(&s))
 
 	got, err := ioutil.ReadFile(file)
-	if err != nil {
-		t.Fatalf("read %q: %v", file, err)
-	}
+	require.NoError(t, err, "read %q", file)
 
 	want := "barfoo"
-	if string(got) != want {
-		t.Errorf("file contents mismatch: want %q, ot %q", want, got)
-	}
-
-	if s.Contents != want {
-		t.Errorf("state.Contents mismatch: want %q, ot %q", want, got)
-	}
+	assert.Equal(t, want, string(got), "file contents mismatch")
+	assert.Equal(t, want, s.Contents, "state.Contents mismatch")
 }
 
 func TestDeleteFile(t *testing.T) {
@@ -78,36 +62,28 @@ func TestDeleteFile(t *testing.T) {
 		file := filepath.Join(dir, "does-not-exist")
 
 		s := state{Path: file}
-		if err := DeleteFile().run(&s); err == nil {
-			t.Errorf("expected error in deleting %q", file)
-		}
+		assert.Error(t, DeleteFile().run(&s),
+			"expected error in deleting %q", file)
 	})
 
 	t.Run("file exists", func(t *testing.T) {
 		file := filepath.Join(dir, "file")
 
-		if err := ioutil.WriteFile(file, []byte("foo"), 0644); err != nil {
-			t.Fatalf("write %q: %v", file, err)
-		}
+		require.NoError(t,
+			ioutil.WriteFile(file, []byte("foo"), 0644),
+			"write %q", file)
 
 		s := state{Path: file}
-		if err := DeleteFile().run(&s); err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		require.NoError(t, DeleteFile().run(&s))
 
-		if info, err := os.Stat(file); err == nil {
-			t.Errorf("file %q should not exist, got %v", file, info.Mode())
-		}
+		info, err := os.Stat(file)
+		assert.Error(t, err,
+			"file %q should not exist, got %v", file, info)
 	})
 }
 
 func TestExitCode(t *testing.T) {
 	var s state
-	if err := ExitCode(2).run(&s); err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	if got := s.ExitCode; got != 2 {
-		t.Errorf("unexpected exit code %v, want 2", got)
-	}
+	assert.NoError(t, ExitCode(2).run(&s))
+	assert.Equal(t, 2, s.ExitCode, "unexpected exit code")
 }
