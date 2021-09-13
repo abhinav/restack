@@ -1,8 +1,7 @@
-# This is an example .goreleaser.yml file with some sane defaults.
-# Make sure to check the documentation at http://goreleaser.com
 before:
   hooks:
     - ./scripts/check-version.sh {{.Version}}
+
 builds:
   - main: ./cmd/restack
     binary: restack
@@ -12,6 +11,7 @@ builds:
       - linux
       - windows
       - darwin
+
 archives:
   - replacements:
       darwin: Darwin
@@ -19,10 +19,30 @@ archives:
       windows: Windows
       386: i386
       amd64: x86_64
+
+brews:
+  - tap:
+      owner: abhinav
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_msg_template: "{{ .ProjectName }}: Update formula to {{ .Tag }}"
+    commit_author:
+      name: Abhinav Gupta
+      email: 41730+abhinav@users.noreply.github.com
+    homepage: https://github.com/abhinav/restack
+    description: "Makes interactive Git rebase nicer."
+    license: "MIT"
+    skip_upload: auto
+    dependencies:
+      - name: git
+    test: |
+      system "#{bin}/restack -version"
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ incminor .Tag }}-dev"
+
 changelog:
   # A commit log is not a changelog.
   skip: true
