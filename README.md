@@ -13,7 +13,7 @@ Installation
 Binaries
 --------
 
-Pre-built ARM and 64-bit binaries are available for Linux and Mac at
+Pre-build binaries for Linux, macOS, and Windows are available at
 <https://github.com/abhinav/restack/releases>. To install, simply unpack the
 archive and put the binaries somewhere on your `$PATH`.
 
@@ -24,6 +24,10 @@ For example, if you have `$HOME/bin` on your `$PATH`,
     VERSION=0.5.0
     URL="https://github.com/abhinav/restack/releases/download/v$VERSION/restack_${VERSION}_${OS}_${ARCH}.tar.gz"
     curl -L "$URL" | tar xzv -C ~/bin restack
+
+Alternatively, if you use Homebrew or Linuxbrew, run the following command.
+
+    brew install abhinav/tap/restack
 
 Build From Source
 -----------------
