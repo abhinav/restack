@@ -2,6 +2,7 @@ package restack
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,10 +19,13 @@ type Setup struct {
 	Stderr io.Writer
 }
 
+//go:embed edit.sh
+var _editScript []byte
+
 // Run runs the setup command.
 func (s *Setup) Run(ctx context.Context) error {
 	if s.PrintScript {
-		fmt.Fprint(s.Stdout, _editScript)
+		fmt.Fprint(s.Stdout, string(_editScript))
 		return nil
 	}
 
@@ -37,7 +41,7 @@ func (s *Setup) Run(ctx context.Context) error {
 	}
 
 	editCmd := filepath.Join(restackDir, "edit.sh")
-	if err := ioutil.WriteFile(editCmd, []byte(_editScript), 0755); err != nil {
+	if err := ioutil.WriteFile(editCmd, _editScript, 0755); err != nil {
 		return fmt.Errorf("write file %q: %v", editCmd, err)
 	}
 
@@ -51,27 +55,3 @@ func (s *Setup) Run(ctx context.Context) error {
 	fmt.Fprintln(s.Stderr, "restack has been set up successfully.")
 	return nil
 }
-
-const _editScript = `#!/bin/sh -e
-
-editor=$(git var GIT_EDITOR)
-restack=$(command -v restack || echo "")
-
-# $GOPATH/bin is not on $PATH but restack is installed.
-if [ -z "$restack" ]; then
-	if [ -n "$GOPATH" ] && [ -x "$GOPATH/bin/restack" ]; then
-		restack="$GOPATH/bin/restack"
-	fi
-fi
-
-if [ -n "$restack" ]; then
-	"$restack" edit --editor="$editor" "$@"
-else
-	echo "WARNING:" >&2
-	echo "  Could not find restack. Falling back to $editor." >&2
-	echo "  To install restack, see https://github.com/abhinav/restack#installation" >&2
-	echo "" >&2
-
-	"$editor" "$@"
-fi
-`
