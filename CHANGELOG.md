@@ -1,7 +1,7 @@
 Releases
 ========
 
-v0.5.1 (unreleased)
+v0.5.1 (2021-09-18)
 -------------------
 
 -   On Linux, don't fail to edit if `/tmp` is mounted on a different partition.
