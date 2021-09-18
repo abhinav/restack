@@ -37,6 +37,15 @@ command.
 
     $ go install github.com/abhinav/restack/cmd/restack@latest
 
+On ArchLinux, you can also install `restack` by downloading it from the AUR.
+
+    $ git clone https://aur.archlinux.org/restack.git
+    $ cd restack
+    $ makepkg -si
+
+    # Or with an AUR helper like yay:
+    $ yay -S restack
+
 Setup
 =====
 
