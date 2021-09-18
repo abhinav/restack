@@ -55,7 +55,7 @@ func (e *Edit) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("edit %q: %v", outFilePath, err)
 	}
 
-	if err := os.Rename(outFilePath, e.Path); err != nil {
+	if err := renameFile(outFilePath, e.Path); err != nil {
 		return fmt.Errorf("overwrite %q: %v", e.Path, err)
 	}
 
