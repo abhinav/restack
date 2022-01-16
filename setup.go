@@ -2,7 +2,7 @@ package restack
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // for setup script
 	"fmt"
 	"io"
 	"io/ioutil"
