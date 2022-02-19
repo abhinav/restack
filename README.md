@@ -28,6 +28,15 @@ For example, if you have `$HOME/bin` on your `$PATH`,
 Alternatively, if you use Homebrew or Linuxbrew, run the following command.
 
     brew install abhinav/tap/restack
+    
+On ArchLinux, you can install the pre-built binary from AUR.
+
+    $ git clone https://aur.archlinux.org/restack-bin.git
+    $ cd restack
+    $ makepkg -si
+
+    # Or if you use an AUR helper like yay:
+    $ yay -S restack-bin
 
 Build From Source
 -----------------
@@ -37,23 +46,14 @@ command.
 
     $ go install github.com/abhinav/restack/cmd/restack@latest
 
-On ArchLinux, you can also install `restack` by downloading it from the AUR.
+On ArchLinux, you can build `restack` from source from AUR.
 
-    # Use the restack package to build from source.
     $ git clone https://aur.archlinux.org/restack.git
     $ cd restack
     $ makepkg -si
     
-    # Or the restack-bin package for a pre-built binary.
-    $ git clone https://aur.archlinux.org/restack-bin.git
-    $ cd restack
-    $ makepkg -si
-
-
-    # With an AUR helper like yay, use,
+    # Or if you use an AUR helper like yay:
     $ yay -S restack
-    # or,
-    $ yay -S restack-bin
 
 Setup
 =====
