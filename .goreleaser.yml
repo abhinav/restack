@@ -7,10 +7,21 @@ builds:
     binary: restack
     env:
       - CGO_ENABLED=0
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
     goos:
       - linux
       - windows
       - darwin
+    goarm: [5, 6, 7]
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: darwin
+        goarch: arm
 
 archives:
   - replacements:
@@ -28,7 +39,7 @@ brews:
     commit_msg_template: "{{ .ProjectName }}: Update formula to {{ .Tag }}"
     commit_author:
       name: Abhinav Gupta
-      email: 41730+abhinav@users.noreply.github.com
+      email: mail@abhinavg.net
     homepage: https://github.com/abhinav/restack
     description: "Makes interactive Git rebase nicer."
     license: "MIT"
@@ -37,6 +48,25 @@ brews:
       - name: git
     test: |
       system "#{bin}/restack -version"
+
+aurs:
+  - name: restack-bin
+    homepage: https://github.com/abhinav/restack
+    description: "Makes interactive Git rebase nicer."
+    maintainers:
+      - 'Abhinav Gupta <mail@abhinavg.net>'
+    license: "MIT"
+    git_url: "ssh://aur@aur.archlinux.org/restack-bin.git"
+    skip_upload: auto
+    private_key: '{{ .Env.AUR_KEY }}'
+    package: |-
+      install -Dm755 "./restack" "${pkgdir}/usr/bin/restack"
+      install -Dm755 "./LICENSE" "${pkgdir}/usr/share/licenses/restack/LICENSE"
+    commit_author:
+      name: Abhinav Gupta
+      email: mail@abhinavg.net
+
+
 checksum:
   name_template: 'checksums.txt'
 

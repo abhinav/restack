@@ -1,10 +1,16 @@
 Releases
 ========
 
+v0.5.3 (2022-02-19)
+-------------------
+
+-   Include binaries for Linux 32-bit ARM.
+
+
 v0.5.2 (2021-10-28)
 -------------------
 
-- Homebrew formula: Conform to new format.
+-   Homebrew formula: Conform to new format.
 
 
 v0.5.1 (2021-09-18)
