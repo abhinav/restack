@@ -39,12 +39,21 @@ command.
 
 On ArchLinux, you can also install `restack` by downloading it from the AUR.
 
+    # Use the restack package to build from source.
     $ git clone https://aur.archlinux.org/restack.git
     $ cd restack
     $ makepkg -si
+    
+    # Or the restack-bin package for a pre-built binary.
+    $ git clone https://aur.archlinux.org/restack-bin.git
+    $ cd restack
+    $ makepkg -si
 
-    # Or with an AUR helper like yay:
+
+    # With an AUR helper like yay, use,
     $ yay -S restack
+    # or,
+    $ yay -S restack-bin
 
 Setup
 =====
