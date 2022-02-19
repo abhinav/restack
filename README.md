@@ -21,7 +21,7 @@ For example, if you have `$HOME/bin` on your `$PATH`,
 
     OS=$(uname -s)
     ARCH=$(uname -m)
-    VERSION=0.5.2
+    VERSION=0.5.3
     URL="https://github.com/abhinav/restack/releases/download/v$VERSION/restack_${VERSION}_${OS}_${ARCH}.tar.gz"
     curl -L "$URL" | tar xzv -C ~/bin restack
 
