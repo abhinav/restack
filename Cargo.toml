@@ -1,0 +1,29 @@
+[package]
+name = "restack"
+version = "0.6.0"
+edition = "2021"
+description = "Makes git rebase --interactive nicer."
+
+[[bin]]
+name = "restack"
+path = "src/main.rs"
+doctest = false
+test = true
+
+[dependencies]
+anyhow = "1.0"
+argh = "0.1.7"
+dirs = "4.0.0"
+tempfile = "3.3.0"
+
+[dev-dependencies]
+xz2 = "0.1.6"
+tar = "0.4.38"
+sha2 = "0.10.2"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
