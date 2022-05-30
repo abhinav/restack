@@ -153,7 +153,7 @@ Next, create a file named `git-restack` with the following contents.
 
 ```bash
 #!/bin/bash
-exec git -c sequence.editor="restack edit" rebase "$@"
+exec git -c sequence.editor="restack edit" rebase -i "$@"
 ```
 
 Mark it as executable and place it somewhere on `$PATH`.
