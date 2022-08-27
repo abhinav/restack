@@ -63,7 +63,7 @@ func run(opts *options, args []string) error {
 	args = flag.Args()
 	if len(args) == 0 {
 		flag.Usage()
-		return errCommandUnspecified
+		return errors.New("no command specified")
 	}
 
 	cmd, args := args[0], args[1:]
@@ -78,7 +78,7 @@ func run(opts *options, args []string) error {
 		c, err = newEdit(opts, args)
 	default:
 		flag.Usage()
-		return errUnknownCommand(cmd)
+		return fmt.Errorf("unrecognized command %q", cmd)
 	}
 
 	if err != nil {
@@ -86,20 +86,6 @@ func run(opts *options, args []string) error {
 	}
 
 	return c.Run(context.Background())
-}
-
-var errCommandUnspecified = errors.New("no command specified")
-
-type errUnknownCommand string
-
-func (e errUnknownCommand) Error() string {
-	return fmt.Sprintf("unrecognized command %q", string(e))
-}
-
-type errTooManyArguments struct{ Got, Want int }
-
-func (e errTooManyArguments) Error() string {
-	return fmt.Sprintf("too many arguments: got %d, want %d", e.Got, e.Want)
 }
 
 type command interface {
@@ -133,7 +119,7 @@ func newSetup(opts *options, args []string) (*restack.Setup, error) {
 
 	if flag.NArg() > 0 {
 		flag.Usage()
-		return nil, errTooManyArguments{Got: len(args)}
+		return nil, fmt.Errorf("too many arguments: %q", flag.Args())
 	}
 
 	return &setup, nil
@@ -188,18 +174,16 @@ func newEdit(opts *options, args []string) (*restack.Edit, error) {
 	switch len(args) {
 	case 0:
 		flag.Usage()
-		return nil, errNoFileSpecified
+		return nil, errors.New("no file specified: please provide a file name")
 	case 1:
 		edit.Path = args[0]
 	default:
 		flag.Usage()
-		return nil, errTooManyArguments{Got: len(args), Want: 1}
+		return nil, fmt.Errorf("too many arguments: %q, expected 1", args)
 	}
 
 	return &edit, nil
 }
-
-var errNoFileSpecified = errors.New("no file specified: please provide a file name")
 
 func usage(flag *flag.FlagSet, usage string) func() {
 	return func() {
