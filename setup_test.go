@@ -3,11 +3,11 @@ package restack
 import (
 	"bytes"
 	"context"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
+	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +28,7 @@ func TestSetup(t *testing.T) {
 	require.NoError(t, setup.Run(ctx), "setup must not fail")
 
 	scriptPath := filepath.Join(home, ".restack/edit.sh")
-	scriptInfo, err := os.Stat(scriptPath)
-	require.NoError(t, err, "want edit script: %v", scriptPath)
+	scriptInfo := iotest.Stat(t, scriptPath)
 
 	mode := scriptInfo.Mode()
 	assert.NotZero(t, mode&0100, "edit.sh: want executable, got %v", mode)

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/abhinav/restack/internal/editorfake"
+	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/stretchr/testify/assert"
@@ -130,8 +131,6 @@ func touch(t *testing.T, paths ...string) {
 	t.Helper()
 
 	for _, path := range paths {
-		require.NoError(t,
-			os.WriteFile(path, []byte{}, 0o644),
-			"touch %q", path)
+		iotest.WriteFile(t, path, "", 0o644)
 	}
 }

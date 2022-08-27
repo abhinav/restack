@@ -1,6 +1,7 @@
 package iotest
 
 import (
+	"io/fs"
 	"os"
 
 	"github.com/abhinav/restack/internal/test"
@@ -29,4 +30,31 @@ func TempFile(t test.T, prefix string) *os.File {
 	})
 
 	return f
+}
+
+// WriteFile is a shortcut to os.WriteFile for tests.
+func WriteFile(t test.T, path, body string, perm os.FileMode) {
+	t.Helper()
+
+	require.NoError(t,
+		os.WriteFile(path, []byte(body), perm),
+		"write %q", path)
+}
+
+// ReadFile is a shortcut to os.ReadFile for tests.
+func ReadFile(t test.T, path string) string {
+	t.Helper()
+
+	body, err := os.ReadFile(path)
+	require.NoError(t, err, "read %q", path)
+	return string(body)
+}
+
+// Stat is a shortcut to os.Stat for tests.
+func Stat(t test.T, path string) fs.FileInfo {
+	t.Helper()
+
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+	return info
 }
