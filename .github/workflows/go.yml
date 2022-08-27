@@ -41,7 +41,10 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: make test
+      run: make cover
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1
 
   release:
     runs-on: ubuntu-latest
