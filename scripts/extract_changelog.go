@@ -16,6 +16,9 @@ func main() {
 	}
 
 	version := os.Args[1]
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
 	if err := run(version, os.Stdout); err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +33,7 @@ const (
 )
 
 func run(version string, out io.Writer) error {
-	file, err := os.OpenFile("CHANGELOG.md", os.O_RDONLY, 0444)
+	file, err := os.OpenFile("CHANGELOG.md", os.O_RDONLY, 0o444)
 	if err != nil {
 		return err
 	}
