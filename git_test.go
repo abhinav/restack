@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/abhinav/restack/internal/editorfake"
-	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +16,7 @@ import (
 
 func TestSystemGit_RebaseHeadName(t *testing.T) {
 	ostest.Setenv(t, "HOME", t.TempDir())
-	ostest.Chdir(t, iotest.TempDir(t, "git-rebase-head-name"))
+	ostest.Chdir(t, t.TempDir())
 
 	gitInit(t)
 
@@ -54,7 +53,7 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 
 func TestSystemGit_ListBranches(t *testing.T) {
 	ostest.Setenv(t, "HOME", t.TempDir())
-	ostest.Chdir(t, iotest.TempDir(t, "git-list-branches"))
+	ostest.Chdir(t, t.TempDir())
 
 	gitInit(t)
 

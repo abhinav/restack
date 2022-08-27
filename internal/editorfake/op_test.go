@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abhinav/restack/internal/iotest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +26,7 @@ func TestWantContents(t *testing.T) {
 }
 
 func TestGiveContents(t *testing.T) {
-	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
+	file := filepath.Join(t.TempDir(), "file")
 
 	s := state{Path: file}
 	require.NoError(t,
@@ -42,7 +41,7 @@ func TestGiveContents(t *testing.T) {
 }
 
 func TestAddPrefix(t *testing.T) {
-	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
+	file := filepath.Join(t.TempDir(), "file")
 
 	s := state{Path: file, Contents: "foo"}
 	require.NoError(t, AddPrefix("bar").run(&s))
@@ -56,7 +55,7 @@ func TestAddPrefix(t *testing.T) {
 }
 
 func TestDeleteFile(t *testing.T) {
-	dir := iotest.TempDir(t, "give-contents")
+	dir := t.TempDir()
 
 	t.Run("file does not exist", func(t *testing.T) {
 		file := filepath.Join(dir, "does-not-exist")

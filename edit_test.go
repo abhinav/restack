@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/abhinav/restack/internal/editorfake"
-	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/test"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,7 @@ import (
 var _noop = "noop\n"
 
 func TestEdit(t *testing.T) {
-	dir := iotest.TempDir(t, "edit")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
@@ -108,7 +107,7 @@ func TestEdit_MissingFile(t *testing.T) {
 
 // Handle failures in restacking the instructions.
 func TestEdit_RestackFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-restack-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
@@ -134,7 +133,7 @@ func TestEdit_RestackFailed(t *testing.T) {
 
 // Handle non-zero codes from editors.
 func TestEdit_EditorFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-editor-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
@@ -162,7 +161,7 @@ func TestEdit_EditorFailed(t *testing.T) {
 // Handle failures in renaming if, for example, the file was deleted by the
 // editor.
 func TestEdit_RenameFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-rename-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,

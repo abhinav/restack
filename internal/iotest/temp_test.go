@@ -24,25 +24,6 @@ func (t *fakeT) runCleanup() {
 	}
 }
 
-func TestTempDir(t *testing.T) {
-	ft := fakeT{T: t}
-
-	dir := TempDir(&ft, "foo")
-	assert.NotEmpty(t, dir, "expected a directory")
-
-	info, err := os.Stat(dir)
-	require.NoError(t, err)
-
-	assert.True(t, info.IsDir(),
-		"expected directory, got %v", info.Mode())
-
-	ft.runCleanup()
-
-	info, err = os.Stat(dir)
-	assert.ErrorIs(t, err, os.ErrNotExist,
-		"directory should not exist after cleanup, got %v", info)
-}
-
 func TestTempFile(t *testing.T) {
 	t.Run("automatically close", func(t *testing.T) {
 		ft := fakeT{T: t}

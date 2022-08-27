@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abhinav/restack/internal/iotest"
 	"github.com/abhinav/restack/internal/ostest"
 	"github.com/abhinav/restack/internal/testwriter"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestSetup(t *testing.T) {
-	home := iotest.TempDir(t, "setup")
+	home := t.TempDir()
 	ostest.Setenv(t, "HOME", home)
 
 	twriter := testwriter.New(t)

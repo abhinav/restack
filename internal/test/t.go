@@ -7,4 +7,5 @@ type T interface {
 	FailNow()
 	Helper()
 	Logf(string, ...interface{})
+	TempDir() string
 }
