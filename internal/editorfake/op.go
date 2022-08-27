@@ -2,7 +2,6 @@ package editorfake
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/google/go-cmp/cmp"
@@ -58,7 +57,7 @@ func (*giveContents) optionType() optionType {
 
 func (c *giveContents) run(s *state) error {
 	s.Contents = c.Contents
-	if err := ioutil.WriteFile(s.Path, []byte(s.Contents), 0644); err != nil {
+	if err := os.WriteFile(s.Path, []byte(s.Contents), 0o644); err != nil {
 		return fmt.Errorf("write %q: %v", s.Path, err)
 	}
 	return nil
@@ -79,14 +78,13 @@ func (*addPrefix) optionType() optionType {
 
 func (c *addPrefix) run(s *state) error {
 	s.Contents = c.Prefix + s.Contents
-	if err := ioutil.WriteFile(s.Path, []byte(s.Contents), 0644); err != nil {
+	if err := os.WriteFile(s.Path, []byte(s.Contents), 0o644); err != nil {
 		return fmt.Errorf("write %q: %v", s.Path, err)
 	}
 	return nil
 }
 
-type deleteFile struct {
-}
+type deleteFile struct{}
 
 // DeleteFile informs the editor to delete the file instead of writing to it.
 func DeleteFile() Option {

@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/abhinav/restack/internal/iotest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +13,7 @@ func TestChdir(t *testing.T) {
 	old, err := os.Getwd()
 	require.NoError(t, err, "get cwd")
 
-	tempdir := iotest.TempDir(t, "chdir")
+	tempdir := t.TempDir()
 
 	// On macOS, tempdir may be a symlink that reports a different working
 	// directory once Chdir-ed into.

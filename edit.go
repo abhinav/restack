@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,7 +28,7 @@ type Edit struct {
 
 // Run runs the "restack edit" command.
 func (e *Edit) Run(ctx context.Context) (err error) {
-	tempDir, err := ioutil.TempDir("", "restack.")
+	tempDir, err := os.MkdirTemp("", "restack.")
 	if err != nil {
 		return fmt.Errorf("create temporary directory: %v", err)
 	}

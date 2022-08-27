@@ -2,7 +2,6 @@ package restack
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -17,7 +16,7 @@ import (
 
 func TestSystemGit_RebaseHeadName(t *testing.T) {
 	ostest.Setenv(t, "HOME", t.TempDir())
-	ostest.Chdir(t, iotest.TempDir(t, "git-rebase-head-name"))
+	ostest.Chdir(t, t.TempDir())
 
 	gitInit(t)
 
@@ -54,7 +53,7 @@ func TestSystemGit_RebaseHeadName(t *testing.T) {
 
 func TestSystemGit_ListBranches(t *testing.T) {
 	ostest.Setenv(t, "HOME", t.TempDir())
-	ostest.Chdir(t, iotest.TempDir(t, "git-list-branches"))
+	ostest.Chdir(t, t.TempDir())
 
 	gitInit(t)
 
@@ -132,8 +131,6 @@ func touch(t *testing.T, paths ...string) {
 	t.Helper()
 
 	for _, path := range paths {
-		require.NoError(t,
-			ioutil.WriteFile(path, []byte{}, 0644),
-			"touch %q", path)
+		iotest.WriteFile(t, path, "", 0o644)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	_ "embed" // for setup script
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,12 +35,12 @@ func (s *Setup) Run(ctx context.Context) error {
 
 	// TODO: Use config dir in the future
 	restackDir := filepath.Join(home, ".restack")
-	if err := os.MkdirAll(restackDir, 0755); err != nil {
+	if err := os.MkdirAll(restackDir, 0o755); err != nil {
 		return fmt.Errorf("create directory %q: %v", restackDir, err)
 	}
 
 	editCmd := filepath.Join(restackDir, "edit.sh")
-	if err := ioutil.WriteFile(editCmd, _editScript, 0755); err != nil {
+	if err := os.WriteFile(editCmd, _editScript, 0o755); err != nil {
 		return fmt.Errorf("write file %q: %v", editCmd, err)
 	}
 

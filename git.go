@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +62,7 @@ func (g *SystemGit) RebaseHeadName(ctx context.Context) (string, error) {
 			return "", err
 		}
 
-		nameBytes, err := ioutil.ReadFile(headFile)
+		nameBytes, err := os.ReadFile(headFile)
 		if err != nil {
 			return "", fmt.Errorf("read %q: %v", headFile, err)
 		}

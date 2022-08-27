@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"testing"
 
@@ -20,12 +20,10 @@ import (
 var _noop = "noop\n"
 
 func TestEdit(t *testing.T) {
-	dir := iotest.TempDir(t, "edit")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	require.NoError(t,
-		ioutil.WriteFile(file, []byte(_noop), 0600),
-		"write temporary file")
+	iotest.WriteFile(t, file, _noop, 0o600)
 
 	restackerOutput := "x echo hello world"
 	restacker := fakeRestacker{
@@ -52,10 +50,7 @@ func TestEdit(t *testing.T) {
 	}).Run(ctx)
 	require.NoError(t, err, "edit failed")
 
-	gotOutput, err := ioutil.ReadFile(file)
-	require.NoError(t, err, "read output")
-
-	assert.Equal(t, editorOutput, string(gotOutput),
+	assert.Equal(t, editorOutput, iotest.ReadFile(t, file),
 		"output mismatch")
 }
 
@@ -76,7 +71,7 @@ func (r *fakeRestacker) Restack(ctx context.Context, req *Request) error {
 	t := r.T
 	r.ran = true
 
-	gotInput, err := ioutil.ReadAll(req.From)
+	gotInput, err := io.ReadAll(req.From)
 	if !assert.NoError(t, err, "read input") {
 		return err
 	}
@@ -108,12 +103,10 @@ func TestEdit_MissingFile(t *testing.T) {
 
 // Handle failures in restacking the instructions.
 func TestEdit_RestackFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-restack-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	require.NoError(t,
-		ioutil.WriteFile(file, []byte(_noop), 0600),
-		"write temporary file")
+	iotest.WriteFile(t, file, _noop, 0o600)
 
 	ctx := context.Background()
 	err := (&Edit{
@@ -134,12 +127,10 @@ func TestEdit_RestackFailed(t *testing.T) {
 
 // Handle non-zero codes from editors.
 func TestEdit_EditorFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-editor-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	require.NoError(t,
-		ioutil.WriteFile(file, []byte{}, 0600),
-		"write temporary file")
+	iotest.WriteFile(t, file, "", 0o600)
 
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()
@@ -162,12 +153,10 @@ func TestEdit_EditorFailed(t *testing.T) {
 // Handle failures in renaming if, for example, the file was deleted by the
 // editor.
 func TestEdit_RenameFailed(t *testing.T) {
-	dir := iotest.TempDir(t, "edit-rename-fail")
+	dir := t.TempDir()
 	file := filepath.Join(dir, "git-rebase-todo")
 
-	require.NoError(t,
-		ioutil.WriteFile(file, []byte{}, 0600),
-		"write temporary file")
+	iotest.WriteFile(t, file, "", 0o600)
 
 	restacker := fakeRestacker{T: t}
 	defer restacker.VerifyRan()

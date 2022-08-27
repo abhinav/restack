@@ -23,16 +23,16 @@ func TestRun_CommandErrors(t *testing.T) {
 	tests := []struct {
 		name string
 		give []string
-		want error
+		want string
 	}{
 		{
 			name: "no arguments",
-			want: errCommandUnspecified,
+			want: "no command specified",
 		},
 		{
 			name: "unknown command",
 			give: []string{"foo"},
-			want: errUnknownCommand("foo"),
+			want: `unrecognized command "foo"`,
 		},
 	}
 
@@ -44,7 +44,7 @@ func TestRun_CommandErrors(t *testing.T) {
 				Stderr: &stderr,
 			}
 
-			assert.ErrorIs(t, run(opts, tt.give), tt.want)
+			assert.ErrorContains(t, run(opts, tt.give), tt.want)
 			assert.NotEmpty(t, stderr.String(),
 				"stderr should contain usage")
 		})
@@ -171,7 +171,7 @@ func TestNewEdit_FileParsing(t *testing.T) {
 		args []string
 
 		want    string
-		wantErr error
+		wantErr string
 	}{
 		{
 			name: "path specified",
@@ -181,12 +181,12 @@ func TestNewEdit_FileParsing(t *testing.T) {
 		{
 			name:    "no path specified",
 			args:    []string{"-e", "foo"},
-			wantErr: errNoFileSpecified,
+			wantErr: "no file specified",
 		},
 		{
 			name:    "too many paths",
 			args:    []string{"foo", "bar"},
-			wantErr: errTooManyArguments{Got: 2, Want: 1},
+			wantErr: `too many arguments: ["foo" "bar"]`,
 		},
 	}
 
@@ -198,8 +198,8 @@ func TestNewEdit_FileParsing(t *testing.T) {
 				Getenv: func(string) string { return "" },
 			}, tt.args)
 
-			if tt.wantErr != nil {
-				assert.ErrorIs(t, err, tt.wantErr)
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
 				return
 			}
 

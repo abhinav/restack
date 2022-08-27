@@ -1,7 +1,6 @@
 package editorfake
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,36 +26,30 @@ func TestWantContents(t *testing.T) {
 }
 
 func TestGiveContents(t *testing.T) {
-	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
+	file := filepath.Join(t.TempDir(), "file")
 
 	s := state{Path: file}
 	require.NoError(t,
 		GiveContents("foo").run(&s))
 
-	got, err := ioutil.ReadFile(file)
-	require.NoError(t, err, "read %q", file)
-
 	want := "foo"
-	assert.Equal(t, want, string(got), "file contents mismatch")
+	assert.Equal(t, want, iotest.ReadFile(t, file), "file contents mismatch")
 	assert.Equal(t, want, s.Contents, "state.Contents mismatch")
 }
 
 func TestAddPrefix(t *testing.T) {
-	file := filepath.Join(iotest.TempDir(t, "give-contents"), "file")
+	file := filepath.Join(t.TempDir(), "file")
 
 	s := state{Path: file, Contents: "foo"}
 	require.NoError(t, AddPrefix("bar").run(&s))
 
-	got, err := ioutil.ReadFile(file)
-	require.NoError(t, err, "read %q", file)
-
 	want := "barfoo"
-	assert.Equal(t, want, string(got), "file contents mismatch")
+	assert.Equal(t, want, iotest.ReadFile(t, file), "file contents mismatch")
 	assert.Equal(t, want, s.Contents, "state.Contents mismatch")
 }
 
 func TestDeleteFile(t *testing.T) {
-	dir := iotest.TempDir(t, "give-contents")
+	dir := t.TempDir()
 
 	t.Run("file does not exist", func(t *testing.T) {
 		file := filepath.Join(dir, "does-not-exist")
@@ -69,9 +62,7 @@ func TestDeleteFile(t *testing.T) {
 	t.Run("file exists", func(t *testing.T) {
 		file := filepath.Join(dir, "file")
 
-		require.NoError(t,
-			ioutil.WriteFile(file, []byte("foo"), 0644),
-			"write %q", file)
+		iotest.WriteFile(t, file, "foo", 0o644)
 
 		s := state{Path: file}
 		require.NoError(t, DeleteFile().run(&s))
