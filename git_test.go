@@ -2,7 +2,6 @@ package restack
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -132,7 +131,7 @@ func touch(t *testing.T, paths ...string) {
 
 	for _, path := range paths {
 		require.NoError(t,
-			ioutil.WriteFile(path, []byte{}, 0644),
+			os.WriteFile(path, []byte{}, 0o644),
 			"touch %q", path)
 	}
 }

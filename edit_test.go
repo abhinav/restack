@@ -5,7 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestEdit(t *testing.T) {
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
-		ioutil.WriteFile(file, []byte(_noop), 0600),
+		os.WriteFile(file, []byte(_noop), 0o600),
 		"write temporary file")
 
 	restackerOutput := "x echo hello world"
@@ -51,7 +52,7 @@ func TestEdit(t *testing.T) {
 	}).Run(ctx)
 	require.NoError(t, err, "edit failed")
 
-	gotOutput, err := ioutil.ReadFile(file)
+	gotOutput, err := os.ReadFile(file)
 	require.NoError(t, err, "read output")
 
 	assert.Equal(t, editorOutput, string(gotOutput),
@@ -75,7 +76,7 @@ func (r *fakeRestacker) Restack(ctx context.Context, req *Request) error {
 	t := r.T
 	r.ran = true
 
-	gotInput, err := ioutil.ReadAll(req.From)
+	gotInput, err := io.ReadAll(req.From)
 	if !assert.NoError(t, err, "read input") {
 		return err
 	}
@@ -111,7 +112,7 @@ func TestEdit_RestackFailed(t *testing.T) {
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
-		ioutil.WriteFile(file, []byte(_noop), 0600),
+		os.WriteFile(file, []byte(_noop), 0o600),
 		"write temporary file")
 
 	ctx := context.Background()
@@ -137,7 +138,7 @@ func TestEdit_EditorFailed(t *testing.T) {
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
-		ioutil.WriteFile(file, []byte{}, 0600),
+		os.WriteFile(file, []byte{}, 0o600),
 		"write temporary file")
 
 	restacker := fakeRestacker{T: t}
@@ -165,7 +166,7 @@ func TestEdit_RenameFailed(t *testing.T) {
 	file := filepath.Join(dir, "git-rebase-todo")
 
 	require.NoError(t,
-		ioutil.WriteFile(file, []byte{}, 0600),
+		os.WriteFile(file, []byte{}, 0o600),
 		"write temporary file")
 
 	restacker := fakeRestacker{T: t}

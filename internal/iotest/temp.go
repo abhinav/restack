@@ -1,7 +1,6 @@
 package iotest
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/abhinav/restack/internal/test"
@@ -15,7 +14,7 @@ import (
 func TempFile(t test.T, prefix string) *os.File {
 	t.Helper()
 
-	f, err := ioutil.TempFile("", prefix)
+	f, err := os.CreateTemp("", prefix)
 	require.NoError(t, err, "make tempfile")
 	name := f.Name()
 

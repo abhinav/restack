@@ -1,7 +1,6 @@
 package editorfake
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +31,7 @@ func TestGiveContents(t *testing.T) {
 	require.NoError(t,
 		GiveContents("foo").run(&s))
 
-	got, err := ioutil.ReadFile(file)
+	got, err := os.ReadFile(file)
 	require.NoError(t, err, "read %q", file)
 
 	want := "foo"
@@ -46,7 +45,7 @@ func TestAddPrefix(t *testing.T) {
 	s := state{Path: file, Contents: "foo"}
 	require.NoError(t, AddPrefix("bar").run(&s))
 
-	got, err := ioutil.ReadFile(file)
+	got, err := os.ReadFile(file)
 	require.NoError(t, err, "read %q", file)
 
 	want := "barfoo"
@@ -69,7 +68,7 @@ func TestDeleteFile(t *testing.T) {
 		file := filepath.Join(dir, "file")
 
 		require.NoError(t,
-			ioutil.WriteFile(file, []byte("foo"), 0644),
+			os.WriteFile(file, []byte("foo"), 0o644),
 			"write %q", file)
 
 		s := state{Path: file}

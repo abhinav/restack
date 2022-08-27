@@ -10,7 +10,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -24,11 +23,11 @@ import (
 //
 // Use this in TestMain before calling m.Run().
 //
-//  func TestMain(m *testing.M) {
-//    editortest.TryMain()
+//	func TestMain(m *testing.M) {
+//	  editortest.TryMain()
 //
-//    os.Exit(m.Run())
-//  }
+//	  os.Exit(m.Run())
+//	}
 //
 // This is a no-op if not inside a fake editor environment.
 func TryMain() {
@@ -146,7 +145,7 @@ func main(cfgFile string) error {
 	}
 	file := args[0]
 
-	contents, err := ioutil.ReadFile(file)
+	contents, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("read %q: %v", file, err)
 	}
