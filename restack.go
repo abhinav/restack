@@ -86,8 +86,24 @@ type gitRestack struct {
 }
 
 func (r *gitRestack) Process(line string) error {
+	if len(line) == 0 {
+		// Empty lines delineate sections.
+		// Push out any pending "git branch -x" statements
+		// before printing the next section.
+		var err error
+		if !r.updatePreviousBranches() {
+			// updatePreviousBranches adds a newline
+			// after the git branch statements
+			// if there were any new entries.
+			// So we don't need to add another.
+			_, err = fmt.Fprintln(r.To, line)
+		}
+		return err
+	}
+
 	// If we see comments, write the push section first.
 	if len(line) > 0 && line[0] == '#' {
+		r.updatePreviousBranches()
 		if err := r.writePushSection(false, true); err != nil {
 			return err
 		}
@@ -126,11 +142,12 @@ func (r *gitRestack) Finish() {
 	r.writePushSection(true, false)
 }
 
-func (r *gitRestack) updatePreviousBranches() {
+// Adds "git branch -f" directives for recorded branches, if any.
+// Reports whether entries were added.
+func (r *gitRestack) updatePreviousBranches() (updated bool) {
 	branches := r.lastLineBranches
 	r.lastLineBranches = nil
 
-	updated := false
 	for _, b := range branches {
 		if b.Name == r.RebaseHeadName {
 			continue
@@ -145,6 +162,7 @@ func (r *gitRestack) updatePreviousBranches() {
 	if updated {
 		fmt.Fprintln(r.To)
 	}
+	return updated
 }
 
 const _pushSectionPrefix = "# Uncomment this section to push the changes.\n"
