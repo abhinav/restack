@@ -1,6 +1,13 @@
 Releases
 ========
 
+v0.5.4 (2022-08-30)
+-------------------
+
+-   Fix branches and push directives skipped when there's an empty line and a
+    comment right after the instruction list.
+
+
 v0.5.3 (2022-02-19)
 -------------------
 
