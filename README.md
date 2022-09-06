@@ -1,4 +1,4 @@
-# restack [![Go](https://github.com/abhinav/restack/actions/workflows/go.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/go.yml)
+# 📚 restack [![Go](https://github.com/abhinav/restack/actions/workflows/go.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/go.yml)
 
 restack augments the experience of performing an interactive Git rebase to make
 it more friendly to workflows that involve lots of interdependent branches.
