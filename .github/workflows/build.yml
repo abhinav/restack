@@ -23,13 +23,9 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: 1.63.0
-        components: rustfmt, clippy, llvm-tools-preview
+        components: rustfmt, clippy
 
     - uses: Swatinem/rust-cache@v2
-
-    - name: Install tools
-      run: cargo install grcov
-      # TODO: Use pinned version
 
     - name: Lint
       run: make lint
@@ -38,10 +34,4 @@ jobs:
       run: make build
 
     - name: Test
-      run: make cover
-
-    # TODO: wait to push to public
-    # - name: Upload coverage
-    #   uses: codecov/codecov-action@v3
-    #   with:
-    #     files: lcov.info
+      run: make test
