@@ -12,7 +12,7 @@ test = true
 
 [dependencies]
 anyhow = "1.0"
-argh = "0.1.7"
+argh = "0.1.8"
 dirs = "4.0.0"
 tempfile = "3.3.0"
 
