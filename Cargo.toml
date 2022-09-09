@@ -23,5 +23,4 @@ sha2 = "0.10.5"
 
 [profile.release]
 strip = true
-opt-level = "z"
 lto = true
