@@ -103,7 +103,7 @@ impl<'a> Git for Shell<'a> {
             .stdout(process::Stdio::piped());
         let mut child = cmd
             .spawn()
-            .with_context(|| format!("run {}", cmd_desc(&cmd)))?;
+            .with_context(|| format!("unable to run {}", cmd_desc(&cmd)))?;
 
         let stderr_thread = {
             let mut stderr_reader = child.stderr.take().unwrap();
@@ -112,7 +112,7 @@ impl<'a> Git for Shell<'a> {
                 let mut output = Vec::new();
                 stderr_reader
                     .read_to_end(&mut output)
-                    .context("read stderr")?;
+                    .context("error reading stderr")?;
 
                 Ok(output)
             })
@@ -150,7 +150,7 @@ impl<'a> Git for Shell<'a> {
         match child_result {
             Ok(status) => {
                 if !status.success() {
-                    let mut errmsg = format!("{} failed: {}", cmd_desc(&cmd), status);
+                    let mut errmsg = format!("command {} failed: {}", cmd_desc(&cmd), status);
                     if let Some(stderr) = stderr {
                         if !stderr.is_empty() {
                             write!(&mut errmsg, "\nstderr: {}", &stderr)?;
