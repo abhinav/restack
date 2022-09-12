@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/multierr v1.8.0
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
