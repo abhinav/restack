@@ -1,3 +1,4 @@
+GRCOV ?= grcov
 GRCOV_FLAGS = -s . --binary-path ./target/debug --branch --ignore-not-existing
 RELEASE ?=
 
@@ -26,8 +27,8 @@ cover:
 	cargo build
 	LLVM_PROFILE_FILE=$(shell pwd)/restack-%p-%m.profraw cargo test
 	@mkdir -p ./target/debug/coverage
-	grcov . $(GRCOV_FLAGS) -t html -o ./target/debug/coverage/
-	grcov . $(GRCOV_FLAGS) -t lcov -o lcov.info
+	$(GRCOV) . $(GRCOV_FLAGS) -t html -o ./target/debug/coverage/
+	$(GRCOV) . $(GRCOV_FLAGS) -t lcov -o lcov.info
 
 .PHONY: lint
 lint: fmt clippy

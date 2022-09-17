@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: ['*']
 
+env:
+  GRCOV_VERSION: v0.8.11
+
 jobs:
 
   build:
@@ -24,9 +27,21 @@ jobs:
       with:
         toolchain: 1.63.0
         profile: minimal
-        components: rustfmt, clippy
+        components: rustfmt, clippy, llvm-tools-preview
 
     - uses: Swatinem/rust-cache@v2
+
+    - name: Install grcov
+      run: |
+        mkdir -p tools
+        curl -L https://github.com/mozilla/grcov/releases/download/${{ env.GRCOV_VERSION }}/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar xvjf - -C tools 
+
+    - name: Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          tools/
+        key: grcov-${{ env.GRCOV_VERSION }}
 
     - name: Lint
       run: make lint
@@ -35,4 +50,11 @@ jobs:
       run: make build
 
     - name: Test
-      run: make test
+      run: make cover
+      env:
+        GRCOV: tools/grcov
+
+    - name: Upload coverage data
+      uses: codecov/codecov-action@v3
+      with:
+        files: lcov.info
