@@ -15,24 +15,18 @@ use std::collections::HashMap;
 use super::{Branch, Git};
 
 /// Shell provides access to the git CLI.
-pub struct Shell<'a> {
-    path: Option<&'a str>,
-
+#[derive(Default)]
+pub struct Shell {
     /// envs is only available during tests and provides environment variable
     /// overrides.
     #[cfg(test)]
     envs: HashMap<ffi::OsString, ffi::OsString>,
 }
 
-impl<'a> Shell<'a> {
+impl Shell {
     /// Builds a new Shell, searching `$PATH` for a git executable.
     pub fn new() -> Self {
-        Self {
-            path: None,
-
-            #[cfg(test)]
-            envs: HashMap::new(),
-        }
+        Default::default()
     }
 
     /// Adds an environment variable to be set for git invocations.
@@ -50,7 +44,7 @@ impl<'a> Shell<'a> {
     /// Builds a `process::Command` for internal use.
     #[allow(clippy::let_and_return, unused_mut)] // used in test
     fn cmd(&self) -> process::Command {
-        let mut cmd = process::Command::new(self.path.unwrap_or("git"));
+        let mut cmd = process::Command::new("git");
         #[cfg(test)]
         {
             cmd.envs(&self.envs);
@@ -60,13 +54,7 @@ impl<'a> Shell<'a> {
     }
 }
 
-impl<'a> Default for Shell<'a> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'a> Git for Shell<'a> {
+impl Git for Shell {
     fn set_global_config_str<K, V>(&self, k: K, v: V) -> Result<()>
     where
         K: AsRef<ffi::OsStr>,
