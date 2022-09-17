@@ -1,6 +1,12 @@
 GRCOV ?= grcov
-GRCOV_FLAGS = -s . --binary-path ./target/debug --branch --ignore-not-existing
 RELEASE ?=
+GRCOV_FLAGS = \
+	--source-dir . \
+	--binary-path ./target/debug \
+	--branch \
+	--ignore-not-existing \
+	--ignore "**/tests/*" \
+	--excl-start '^mod tests \{' --excl-stop '^\}'
 
 ifeq ($(RELEASE),)
 BUILD_FLAGS =
