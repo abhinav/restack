@@ -24,7 +24,7 @@ test:
 cover: export RUSTFLAGS=-Cinstrument-coverage
 cover:
 	@rm -f restack-*.profraw lcov.info
-	cargo build
+	cargo build --tests
 	LLVM_PROFILE_FILE=$(shell pwd)/restack-%p-%m.profraw cargo test
 	@mkdir -p ./target/debug/coverage
 	$(GRCOV) . $(GRCOV_FLAGS) -t html -o ./target/debug/coverage/

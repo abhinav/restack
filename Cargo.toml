@@ -20,6 +20,7 @@ tempfile = "3.3.0"
 xz2 = "0.1.7"
 tar = "0.4.38"
 sha2 = "0.10.5"
+lazy_static = "1.4.0"
 
 [profile.release]
 strip = true
