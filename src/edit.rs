@@ -45,7 +45,8 @@ pub fn run(args: &Args) -> Result<()> {
         let outfile =
             fs::File::create(&out_file).context("Failed to create new git-rebase-todo")?;
         let cfg = restack::Config::new(&cwd, git_shell);
-        cfg.restack("origin", infile, outfile)?;
+        // TODO: determine remote
+        cfg.restack(Some("origin"), infile, outfile)?;
     };
 
     let exit_code = process::Command::new("sh")

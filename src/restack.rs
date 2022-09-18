@@ -7,6 +7,9 @@ use std::{
     path,
 };
 
+#[cfg(test)]
+mod tests;
+
 pub struct Config<'a, Git>
 where
     Git: git::Git,
@@ -27,7 +30,7 @@ where
     /// `dst`.
     pub fn restack<I: io::Read, O: io::Write>(
         &self,
-        remote_name: &str,
+        remote_name: Option<&str>,
         src: I,
         dst: O,
     ) -> Result<()> {
@@ -44,7 +47,7 @@ where
 
         let src = io::BufReader::new(src);
         let mut restack = Restack {
-            remote_name: Some(remote_name),
+            remote_name,
             rebase_branch_name: &rebase_branch_name,
             last_line_branches: Vec::new(),
             updated_branches: Vec::new(),
@@ -64,11 +67,13 @@ where
                     // So if it didn't do anything, re-add the empty line.
                     restack.write_line("")?;
                 }
+                continue;
             }
 
             // Comments usually mark the end of instructions.
             // Flush optional "git push" statements.
             if line.get(0..1) == Some("#") {
+                restack.update_previous_branches()?;
                 restack
                     .write_push_section(false, true)
                     .context("Could not write 'git push' section")?;
@@ -141,7 +146,7 @@ impl<'a, O: io::Write> Restack<'a, O> {
         if pad_before {
             writeln!(self.dst)?;
         }
-        writeln!(self.dst, "# Uncomment this section to push changes.")?;
+        writeln!(self.dst, "# Uncomment this section to push the changes.")?;
         for br in &self.updated_branches {
             writeln!(self.dst, "# exec git push -f {} {}", remote_name, br.name)?;
         }
@@ -177,19 +182,3 @@ impl<'a, O: io::Write> Restack<'a, O> {
         writeln!(self.dst, "{}", line).map_err(Into::into)
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use anyhow::Result;
-
-//     fn restack_test_case(
-//         remote_name: &str,
-//         rebase_head_name: &str,
-//         branches: &[git::Branch],
-//         give: &[&str],
-//         want: &[&str],
-//     ) -> Result<()> {
-//         Ok(())
-//     }
-// }

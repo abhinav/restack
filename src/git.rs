@@ -13,7 +13,7 @@ mod shell;
 pub use self::shell::*;
 
 /// A branch in the repository.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Branch {
     /// Name of the branch.
     pub name: String,
