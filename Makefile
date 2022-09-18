@@ -1,14 +1,5 @@
-GRCOV ?= grcov
 RELEASE ?=
-GRCOV_FLAGS = \
-	--source-dir . \
-	--guess-directory-when-missing \
-	--binary-path ./target/debug \
-	--branch \
-	--ignore-not-existing \
-	--ignore "**/tests/*" \
-	--excl-start '^mod tests \{' --excl-stop '^\}'
-TEST_FLAGS = --features 'anyhow/backtrace' --workspace
+LLVM_COV_REPORT_FLAGS = --hide-instantiations
 
 ifeq ($(RELEASE),)
 BUILD_FLAGS =
@@ -25,19 +16,13 @@ build:
 
 .PHONY: test
 test:
-	RUST_BACKTRACE=1 cargo test $(TEST_FLAGS)
-# TODO: respect release?
+	cargo nextest run --workspace
 
 .PHONY: cover
-cover: export RUSTFLAGS=-Cinstrument-coverage
 cover:
-	@rm -f restack-*.profraw lcov.info
-	cargo build --tests
-	RUST_BACKTRACE=1 LLVM_PROFILE_FILE=$(shell pwd)/restack-%p-%m.profraw \
-		       cargo test $(TEST_FLAGS)
-	@mkdir -p ./target/debug/coverage
-	$(GRCOV) . $(GRCOV_FLAGS) -t html -o ./target/debug/coverage/
-	$(GRCOV) . $(GRCOV_FLAGS) -t lcov -o lcov.info
+	cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+	cargo llvm-cov report $(LLVM_COV_REPORT_FLAGS)
+	cargo llvm-cov report $(LLVM_COV_REPORT_FLAGS) --html
 
 .PHONY: lint
 lint: fmt clippy
