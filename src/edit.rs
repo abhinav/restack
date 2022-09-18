@@ -5,7 +5,7 @@ use std::{borrow::Cow, env, fs, path, process};
 use anyhow::{bail, Context, Result};
 use argh::FromArgs;
 
-use crate::restack;
+use crate::{git, restack};
 
 /// edits the instruction list for an interactive rebase
 #[derive(Debug, PartialEq, Eq, FromArgs)]
@@ -22,6 +22,7 @@ pub struct Args {
 
 /// Runs the `restack edit` command.
 pub fn run(args: &Args) -> Result<()> {
+    let cwd = env::current_dir().context("determine working directory")?;
     let temp_dir = tempfile::tempdir().context("create temporary directory")?;
 
     let editor: Cow<str> = match args.editor.as_ref() {
@@ -36,11 +37,14 @@ pub fn run(args: &Args) -> Result<()> {
         },
     };
 
+    let git_shell = git::Shell::new();
+
     let out_file = temp_dir.path().join("git-rebase-todo");
     {
         let infile = fs::File::open(&args.file).context("open input file")?;
         let outfile = fs::File::create(&out_file).context("create rebase todo")?;
-        restack::restack("origin", infile, outfile)?;
+        let cfg = restack::Config::new(&cwd, git_shell);
+        cfg.restack("origin", infile, outfile)?;
     };
 
     let exit_code = process::Command::new("sh")

@@ -1,97 +1,117 @@
 //! Implements the core restacking logic.
 
+use crate::git;
 use anyhow::{Context, Result};
 use std::{
-    env,
     io::{self, BufRead, Write},
+    path,
 };
 
-use crate::git::{self, Git};
-
-/// restacks branches in the instruction list at `src` and writes the result to
-/// `dst`.
-pub fn restack<I: io::Read, O: io::Write>(remote_name: &str, src: I, dst: O) -> Result<()> {
-    let cwd = env::current_dir().context("determine working directory")?;
-    let git_shell = git::Shell::new(); // TODO: inject this and^
-
-    let rebase_branch_name =
-        git::rebase_head_name(&git_shell, &cwd).context("determine the rebase head")?;
-    let all_branches = git_shell.list_branches(&cwd).context("list branches")?;
-
-    // TODO: sort all_branches by oid. maybe write a OidMap.
-
-    let src = io::BufReader::new(src);
-    let mut restacker = Restacker {
-        remote_name: Some(remote_name),
-        rebase_branch_name: &rebase_branch_name,
-        last_line_branches: Vec::new(),
-        updated_branches: Vec::new(),
-        wrote_push: false,
-        dst: io::BufWriter::new(dst),
-    };
-
-    for line in src.lines() {
-        let line = line.context("read input")?;
-        if line.is_empty() {
-            // Empty lines delineate sections.
-            // Write pending "git branch -x" statements
-            // before going on to the next section.
-            if !restacker.update_previous_branches()? {
-                // update_previous_branches adds a trailing newline
-                // only if git branch statements were added.
-                // So if it didn't do anything, re-add the empty line.
-                restacker.write_line("")?;
-            }
-        }
-
-        // Comments usually mark the end of instructions.
-        // Flush optional "git push" statements.
-        if line.get(0..1) == Some("#") {
-            restacker
-                .write_push_section(false, true)
-                .context("write remote ref push section")?;
-        }
-
-        // (p[ick]|f[ixup]|s[quash]) hash ...
-        let mut parts = line.splitn(3, ' ');
-
-        let cmd = parts.next();
-        if let Some(cmd) = cmd {
-            match cmd {
-                "f" | "fixup" | "s" | "squash" => {} // do nothing
-                _ => {
-                    restacker.update_previous_branches()?;
-                }
-            }
-        }
-
-        // Most lines go as-is.
-        restacker.write_line(&line)?;
-
-        let cmd = match cmd {
-            Some(cmd) => cmd,
-            None => continue,
-        };
-        let hash = match cmd {
-            "p" | "pick" | "r" | "reword" | "e" | "edit" => match parts.next() {
-                Some(s) => s,
-                None => continue,
-            },
-            _ => continue,
-        };
-
-        restacker
-            .last_line_branches
-            .extend(all_branches.iter().filter(|b| b.shorthash == hash))
-    }
-
-    restacker.update_previous_branches()?;
-    restacker.write_push_section(true, false)?;
-
-    Ok(())
+pub struct Config<'a, Git>
+where
+    Git: git::Git,
+{
+    git: Git,
+    cwd: &'a path::Path,
 }
 
-struct Restacker<'a, O: io::Write> {
+impl<'a, Git> Config<'a, Git>
+where
+    Git: git::Git,
+{
+    pub fn new(cwd: &'a path::Path, git: Git) -> Self {
+        Self { cwd, git }
+    }
+
+    /// restacks branches in the instruction list at `src` and writes the result to
+    /// `dst`.
+    pub fn restack<I: io::Read, O: io::Write>(
+        &self,
+        remote_name: &str,
+        src: I,
+        dst: O,
+    ) -> Result<()> {
+        let rebase_branch_name = self
+            .git
+            .rebase_head_name(self.cwd)
+            .context("determine the rebase head")?;
+        let all_branches = self.git.list_branches(self.cwd).context("list branches")?;
+
+        // TODO: sort all_branches by oid. maybe write a OidMap.
+
+        let src = io::BufReader::new(src);
+        let mut restack = Restack {
+            remote_name: Some(remote_name),
+            rebase_branch_name: &rebase_branch_name,
+            last_line_branches: Vec::new(),
+            updated_branches: Vec::new(),
+            wrote_push: false,
+            dst: io::BufWriter::new(dst),
+        };
+
+        for line in src.lines() {
+            let line = line.context("read input")?;
+            if line.is_empty() {
+                // Empty lines delineate sections.
+                // Write pending "git branch -x" statements
+                // before going on to the next section.
+                if !restack.update_previous_branches()? {
+                    // update_previous_branches adds a trailing newline
+                    // only if git branch statements were added.
+                    // So if it didn't do anything, re-add the empty line.
+                    restack.write_line("")?;
+                }
+            }
+
+            // Comments usually mark the end of instructions.
+            // Flush optional "git push" statements.
+            if line.get(0..1) == Some("#") {
+                restack
+                    .write_push_section(false, true)
+                    .context("write remote ref push section")?;
+            }
+
+            // (p[ick]|f[ixup]|s[quash]) hash ...
+            let mut parts = line.splitn(3, ' ');
+
+            let cmd = parts.next();
+            if let Some(cmd) = cmd {
+                match cmd {
+                    "f" | "fixup" | "s" | "squash" => {} // do nothing
+                    _ => {
+                        restack.update_previous_branches()?;
+                    }
+                }
+            }
+
+            // Most lines go as-is.
+            restack.write_line(&line)?;
+
+            let cmd = match cmd {
+                Some(cmd) => cmd,
+                None => continue,
+            };
+            let hash = match cmd {
+                "p" | "pick" | "r" | "reword" | "e" | "edit" => match parts.next() {
+                    Some(s) => s,
+                    None => continue,
+                },
+                _ => continue,
+            };
+
+            restack
+                .last_line_branches
+                .extend(all_branches.iter().filter(|b| b.shorthash == hash))
+        }
+
+        restack.update_previous_branches()?;
+        restack.write_push_section(true, false)?;
+
+        Ok(())
+    }
+}
+
+struct Restack<'a, O: io::Write> {
     remote_name: Option<&'a str>,
     rebase_branch_name: &'a str,
     last_line_branches: Vec<&'a git::Branch>,
@@ -100,7 +120,7 @@ struct Restacker<'a, O: io::Write> {
     dst: io::BufWriter<O>,
 }
 
-impl<'a, O: io::Write> Restacker<'a, O> {
+impl<'a, O: io::Write> Restack<'a, O> {
     fn write_push_section(&mut self, pad_before: bool, pad_after: bool) -> Result<()> {
         if self.wrote_push {
             return Ok(());
