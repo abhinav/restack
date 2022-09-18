@@ -7,6 +7,7 @@ GRCOV_FLAGS = \
 	--ignore-not-existing \
 	--ignore "**/tests/*" \
 	--excl-start '^mod tests \{' --excl-stop '^\}'
+TEST_FLAGS = --features 'anyhow/backtrace'
 
 ifeq ($(RELEASE),)
 BUILD_FLAGS =
@@ -23,7 +24,7 @@ build:
 
 .PHONY: test
 test:
-	cargo test
+	RUST_BACKTRACE=1 cargo test $(TEST_FLAGS)
 # TODO: respect release?
 
 .PHONY: cover
@@ -31,7 +32,8 @@ cover: export RUSTFLAGS=-Cinstrument-coverage
 cover:
 	@rm -f restack-*.profraw lcov.info
 	cargo build --tests
-	LLVM_PROFILE_FILE=$(shell pwd)/restack-%p-%m.profraw cargo test
+	RUST_BACKTRACE=1 LLVM_PROFILE_FILE=$(shell pwd)/restack-%p-%m.profraw \
+		       cargo test $(TEST_FLAGS)
 	@mkdir -p ./target/debug/coverage
 	$(GRCOV) . $(GRCOV_FLAGS) -t html -o ./target/debug/coverage/
 	$(GRCOV) . $(GRCOV_FLAGS) -t lcov -o lcov.info
