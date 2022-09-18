@@ -1,13 +1,13 @@
 use anyhow::Result;
 use argh::FromArgs;
 
-pub mod edit;
-pub mod git;
-pub mod restack;
-pub mod setup;
+mod edit;
+mod git;
+mod restack;
+mod setup;
 
 #[cfg(test)]
-pub mod fixscript;
+mod fixscript;
 
 #[derive(Debug, FromArgs)]
 #[argh(subcommand)]
