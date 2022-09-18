@@ -16,11 +16,11 @@ build:
 
 .PHONY: test
 test:
-	cargo nextest run --workspace
+	cargo nextest run --workspace --no-fail-fast
 
 .PHONY: cover
 cover:
-	cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+	cargo llvm-cov nextest --workspace --lcov --output-path lcov.info --no-fail-fast
 	cargo llvm-cov report $(LLVM_COV_REPORT_FLAGS)
 	cargo llvm-cov report $(LLVM_COV_REPORT_FLAGS) --html
 
