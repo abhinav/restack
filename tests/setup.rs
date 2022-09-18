@@ -14,7 +14,7 @@ fn prints_edit_script() -> Result<()> {
         .args(&["setup", "--print-edit-script"])
         .stderr(Stdio::inherit())
         .output()
-        .context("run restack")?;
+        .context("Failed to run restack")?;
 
     assert!(out.status.success(), "restack failed");
     let first_line = out
@@ -22,7 +22,7 @@ fn prints_edit_script() -> Result<()> {
         .lines()
         .next()
         .expect("non empty output")
-        .context("read stdout")?;
+        .context("Failed to read stdout")?;
     assert_eq!(first_line, "#!/bin/sh -e");
 
     Ok(())
@@ -30,14 +30,14 @@ fn prints_edit_script() -> Result<()> {
 
 #[test]
 fn setup_restack() -> Result<()> {
-    let home_dir = tempdir().context("make tempdir")?;
+    let home_dir = tempdir().context("Failed to make temporary directory")?;
 
     {
         let status = Command::new(RESTACK)
             .arg("setup")
             .env("HOME", home_dir.path())
             .status()
-            .context("run restack")?;
+            .context("Failed to run restack")?;
         assert!(status.success(), "restack failed");
     }
 
@@ -50,7 +50,7 @@ fn setup_restack() -> Result<()> {
             .env("HOME", home_dir.path())
             .stderr(Stdio::inherit())
             .output()
-            .context("run git")?;
+            .context("Failed to run git")?;
         assert!(out.status.success(), "git failed");
 
         assert_eq!(
@@ -64,7 +64,7 @@ fn setup_restack() -> Result<()> {
 
 #[test]
 fn update_old_setup() -> Result<()> {
-    let home_dir = tempdir().context("make tempdir")?;
+    let home_dir = tempdir().context("Failed to make temporary directory")?;
     let edit_script = home_dir.path().join(".restack/edit.sh");
 
     // Outdated setup:
@@ -84,7 +84,7 @@ fn update_old_setup() -> Result<()> {
             .arg("setup")
             .env("HOME", home_dir.path())
             .status()
-            .context("run restack")?;
+            .context("Failed to run restack")?;
         assert!(status.success(), "restack failed");
     }
 
@@ -94,7 +94,7 @@ fn update_old_setup() -> Result<()> {
             .env("HOME", home_dir.path())
             .stderr(Stdio::inherit())
             .output()
-            .context("run git")?;
+            .context("Failed to run git")?;
         assert!(out.status.success(), "git failed");
 
         assert_eq!(

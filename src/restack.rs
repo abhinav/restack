@@ -34,8 +34,11 @@ where
         let rebase_branch_name = self
             .git
             .rebase_head_name(self.cwd)
-            .context("determine the rebase head")?;
-        let all_branches = self.git.list_branches(self.cwd).context("list branches")?;
+            .context("Could not determine rebase head name")?;
+        let all_branches = self
+            .git
+            .list_branches(self.cwd)
+            .context("Unable to list branches")?;
 
         // TODO: sort all_branches by oid. maybe write a OidMap.
 
@@ -50,7 +53,7 @@ where
         };
 
         for line in src.lines() {
-            let line = line.context("read input")?;
+            let line = line.context("Failed while reading input")?;
             if line.is_empty() {
                 // Empty lines delineate sections.
                 // Write pending "git branch -x" statements
@@ -68,7 +71,7 @@ where
             if line.get(0..1) == Some("#") {
                 restack
                     .write_push_section(false, true)
-                    .context("write remote ref push section")?;
+                    .context("Could not write 'git push' section")?;
             }
 
             // (p[ick]|f[ixup]|s[quash]) hash ...
@@ -171,7 +174,7 @@ impl<'a, O: io::Write> Restack<'a, O> {
     }
 
     fn write_line(&mut self, line: &str) -> Result<()> {
-        writeln!(self.dst, "{}", line).context("write output")
+        writeln!(self.dst, "{}", line).map_err(Into::into)
     }
 }
 

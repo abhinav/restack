@@ -54,19 +54,19 @@ impl Fixture<'_> {
     }
 
     fn open_archive(path: &path::Path) -> Result<Self> {
-        let tempdir = tempfile::tempdir().context("cannot create temporary directory")?;
+        let tempdir = tempfile::tempdir().context("Failed to create temporary directory")?;
 
         {
-            let f = fs::File::open(&path).context("cannot open archive")?;
+            let f = fs::File::open(&path).context("Failed to open archive")?;
             let xz_dec = xz2::read::XzDecoder::new(f);
             tar::Archive::new(xz_dec)
                 .unpack(tempdir.path())
-                .context("cannot extract archive")?;
+                .context("Failed to extract archive")?;
         }
 
-        let sha = fs::read(tempdir.path().join("SHA256")).context("failed to read fixture hash")?;
+        let sha = fs::read(tempdir.path().join("SHA256")).context("Failed to read script hash")?;
         let version = fs::read_to_string(tempdir.path().join("VERSION"))
-            .context("failed to read fixture version")?;
+            .context("Failed to read fixture version")?;
 
         // TODO: hash validation here and return error
 
@@ -112,11 +112,11 @@ impl Group {
         let script_path = self.fixture_path(&script_name);
         let archive_path = script_path.with_extension("tar.xz");
 
-        let script_sha = hash_file(&script_path).context("cannot hash fixture script")?;
+        let script_sha = hash_file(&script_path).context("Failed to hash script")?;
 
         if archive_path.exists() {
             let fix = Fixture::open_archive(&archive_path).with_context(|| {
-                format!("unable to open fixture archive {}", archive_path.display())
+                format!("Could not load fixture archive {}", archive_path.display())
             })?;
             if fix.sha == script_sha && fix.version == VERSION {
                 return Ok(fix);
@@ -139,10 +139,11 @@ impl Group {
 
         // TODO: Move new fixture creation into impl Fixture.
 
-        let tempdir = tempfile::tempdir().context("create temporary directory")?;
-        fs::write(tempdir.path().join("SHA256"), &script_sha).context("write SHA file")?;
+        let tempdir = tempfile::tempdir().context("Failed to create temporary directory")?;
+        fs::write(tempdir.path().join("SHA256"), &script_sha)
+            .context("Failed to write script hash")?;
         fs::write(tempdir.path().join("VERSION"), VERSION.as_bytes())
-            .context("write VERSION file")?;
+            .context("Failed to write fixture version")?;
 
         let script_path_abs = script_path.canonicalize()?;
 
@@ -166,14 +167,14 @@ impl Group {
             .env("GIT_COMMITTER_NAME", "committer")
             .env("PATH", &new_path)
             .status()
-            .with_context(|| format!("cannot run {}", script_path_abs.display()))?;
+            .with_context(|| format!("Could not run script {}", script_path_abs.display()))?;
         if !status.success() {
             bail!("fixture {} failed", script_name.as_ref().display());
         }
 
         {
             let f = fs::File::create(&archive_path)
-                .with_context(|| format!("create {}", archive_path.display()))?;
+                .with_context(|| format!("Failed to create archive {}", archive_path.display()))?;
 
             let out = xz2::write::XzEncoder::new(f, 3);
             let mut ar = tar::Builder::new(out);
@@ -190,9 +191,9 @@ impl Group {
 
 /// Hashes the file at the given location.
 fn hash_file(p: &path::Path) -> Result<Vec<u8>> {
-    let mut f = fs::File::open(&p).context("cannot open file")?;
+    let mut f = fs::File::open(&p).context("Failed to open file")?;
     let mut hasher = sha2::Sha256::new();
-    io::copy(&mut f, &mut hasher).context("cannot hash file contents")?;
+    io::copy(&mut f, &mut hasher).context("Could not hash file contents")?;
     Ok(hasher.finalize().to_vec())
 }
 
@@ -219,29 +220,30 @@ mod tests {
         };
 
         let assert_fixture_contents = |want: &str| -> Result<()> {
-            let fix = grp.open("test.sh").context("cannot open fixture")?;
-            let got =
-                fs::read_to_string(fix.dir().join("bar")).context("cannot read generated file")?;
+            let fix = grp.open("test.sh").context("Could not open fixture")?;
+            let got = fs::read_to_string(fix.dir().join("bar"))
+                .context("Unable to read generated file")?;
             assert_eq!(want, got, "contents of generated file did not match");
 
             Ok(())
         };
 
         // Create a fixture for the first time.
-        fs::write(fixtures.join("test.sh"), "echo foo > bar").context("cannot write test file")?;
-        assert_fixture_contents("foo\n").context("could not create initial archive from script")?;
+        fs::write(fixtures.join("test.sh"), "echo foo > bar")
+            .context("Failed to write test file")?;
+        assert_fixture_contents("foo\n").context("Unable to create initial fixture from script")?;
 
         // Verify archive exists and read from it.
         let archive_hash =
-            hash_file(&fixtures.join("test.tar.xz")).context("cannot hash generated archive")?;
-        assert_fixture_contents("foo\n").context("could not open existing archive")?;
+            hash_file(&fixtures.join("test.tar.xz")).context("Failed to hash generated archive")?;
+        assert_fixture_contents("foo\n").context("Unable to load fixture from archive")?;
 
         // Invalidate the archive and reopen.
         fs::write(fixtures.join("test.sh"), "echo 'baz qux' > bar")
-            .context("cannot overwrite test file")?;
-        assert_fixture_contents("baz qux\n").context("could not recreate outdated archive")?;
+            .context("Failed to overwrite test file")?;
+        assert_fixture_contents("baz qux\n").context("Unable to overwrite outdated archive")?;
         let new_archive_hash =
-            hash_file(&fixtures.join("test.tar.xz")).context("cannot hash generated archive")?;
+            hash_file(&fixtures.join("test.tar.xz")).context("Failed to hash updated archive")?;
 
         assert_ne!(
             archive_hash, new_archive_hash,

@@ -38,16 +38,17 @@ where
 /// filesystem boundaries, and /tmp is often mounted on a different file system
 /// than the user's working directory.
 fn unsafe_rename(src: &path::Path, dst: &path::Path) -> Result<()> {
-    let md = fs::metadata(src).with_context(|| format!("cannot inspect {}", src.display()))?;
+    let md = fs::metadata(src).with_context(|| format!("Failed to inspect {}", src.display()))?;
 
     {
-        let mut r = fs::File::open(src).context("cannot open source")?;
-        let mut w = fs::File::create(dst).context("cannot open destination")?;
-        io::copy(&mut r, &mut w).context("copy contents")?;
+        let mut r = fs::File::open(src).context("Failed to open source")?;
+        let mut w = fs::File::create(dst).context("Failed to open destination")?;
+        io::copy(&mut r, &mut w).context("Failed to copy file contents")?;
     }
 
-    fs::set_permissions(dst, md.permissions()).context("cannot update destination permissions")?;
-    fs::remove_file(src).context("cannot delete source file")?;
+    fs::set_permissions(dst, md.permissions())
+        .context("Failed to update destination permissions")?;
+    fs::remove_file(src).context("Failed to delete source file")?;
 
     Ok(())
 }
@@ -61,10 +62,10 @@ mod tests {
         let tempdir = tempfile::tempdir()?;
 
         let from = tempdir.path().join("foo.txt");
-        fs::write(&from, "bar").context("cannot create starting file")?;
+        fs::write(&from, "bar").context("Failed to create starting file")?;
 
         let to = tempdir.path().join("bar.txt");
-        rename_fn(&from, &to).context("cannot rename")?;
+        rename_fn(&from, &to).context("Failed to rename")?;
 
         assert!(to.exists(), "destination does not exist");
         assert!(!from.exists(), "source should not exist");

@@ -27,19 +27,19 @@ pub fn run(args: &Args) -> Result<()> {
     if args.print_script {
         return io::stdout()
             .write_all(EDIT_SCRIPT)
-            .context("print edit script");
+            .context("Could nto print edit script");
     }
 
-    let home = dirs::home_dir().ok_or_else(|| anyhow!("home directory not found"))?;
+    let home = dirs::home_dir().ok_or_else(|| anyhow!("Home directory not found"))?;
 
     let edit_path = {
         let mut path = home.join(".restack");
-        fs::create_dir_all(&path).context("create $HOME/.restack")?;
+        fs::create_dir_all(&path).context("Unable to create $HOME/.restack")?;
 
         path.push("edit.sh");
         fs::File::create(&path)
             .and_then(|mut f| f.write_all(EDIT_SCRIPT))
-            .context("create .restack/edit.sh")?;
+            .context("Failed to write .restack/edit.sh")?;
 
         path
     };
@@ -47,7 +47,7 @@ pub fn run(args: &Args) -> Result<()> {
     let git_shell = git::Shell::new();
     git_shell
         .set_global_config_str("sequence.editor", &edit_path)
-        .context("change sequence.editor")?;
+        .context("Could not update sequence.editor")?;
 
     eprintln!("restack has been successfully set up");
 

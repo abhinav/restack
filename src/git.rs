@@ -38,7 +38,7 @@ pub trait Git {
 
     /// Reports the name of the branch currently being rebased at the given path, if any.
     fn rebase_head_name(&self, dir: &path::Path) -> Result<String> {
-        let git_dir = self.git_dir(dir).context("cannot find .git directory")?;
+        let git_dir = self.git_dir(dir).context("Failed to find .git directory")?;
         rebase_head_name(&git_dir)
     }
 }
@@ -58,13 +58,13 @@ fn rebase_head_name(git_dir: &path::Path) -> Result<String> {
             Err(err) => {
                 if err.kind() != io::ErrorKind::NotFound {
                     return Err(err)
-                        .with_context(|| format!("failed to open {}", head_file.display()));
+                        .with_context(|| format!("Failed to open {}", head_file.display()));
                 }
             }
             Ok(mut f) => {
                 let mut name = String::new();
                 f.read_to_string(&mut name).with_context(|| {
-                    format!("failed to read rebase state from {}", head_file.display())
+                    format!("Failed to read rebase state from {}", head_file.display())
                 })?;
 
                 let name = name.trim();
@@ -133,7 +133,7 @@ mod tests {
         let git = Shell::new();
         let err = git.rebase_head_name(fixture.dir()).unwrap_err();
         assert!(
-            format!("{}", err).contains("failed to open"),
+            format!("{}", err).contains("Failed to open"),
             "got error: {}",
             err
         );
@@ -152,7 +152,7 @@ mod tests {
         let git = Shell::new();
         let err = git.rebase_head_name(fixture.dir()).unwrap_err();
         assert!(
-            format!("{}", err).contains("failed to read rebase state"),
+            format!("{}", err).contains("Failed to read rebase state"),
             "got error: {}",
             err
         );

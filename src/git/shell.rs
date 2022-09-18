@@ -72,7 +72,7 @@ impl Git for Shell {
         )?;
 
         let mut cmd_out =
-            String::from_utf8(cmd_out).context("output of git rev-parse is not valid UTF-8")?;
+            String::from_utf8(cmd_out).context("Output of git rev-parse is not valid UTF-8")?;
         cmd_out.truncate(cmd_out.trim_end().len());
 
         let mut git_dir = path::PathBuf::from(cmd_out);
@@ -91,7 +91,7 @@ impl Git for Shell {
             .stdout(process::Stdio::piped());
         let mut child = cmd
             .spawn()
-            .with_context(|| format!("unable to run {}", cmd_desc(&cmd)))?;
+            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?;
 
         let stderr_thread = {
             let mut stderr_reader = child.stderr.take().unwrap();
@@ -100,7 +100,7 @@ impl Git for Shell {
                 let mut output = Vec::new();
                 stderr_reader
                     .read_to_end(&mut output)
-                    .context("error reading stderr")?;
+                    .context("Error reading stderr")?;
 
                 Ok(output)
             })
@@ -111,7 +111,7 @@ impl Git for Shell {
             let stdout = child.stdout.take().unwrap();
             let rdr = io::BufReader::new(stdout);
             for line in rdr.lines() {
-                let line = line.context("read 'git show-ref' output")?;
+                let line = line.context("Could not read 'git show-ref' output")?;
                 let mut parts = line.split(' ');
                 || -> Option<()> {
                     let hash = parts.next()?;
@@ -167,7 +167,7 @@ impl Git for Shell {
 fn run_cmd(cmd: &mut process::Command) -> Result<()> {
     let status = cmd
         .status()
-        .with_context(|| format!("run {}", cmd_desc(cmd)))?;
+        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?;
     if !status.success() {
         bail!("{} failed: {}", cmd_desc(cmd), status);
     }
@@ -181,7 +181,7 @@ fn run_cmd(cmd: &mut process::Command) -> Result<()> {
 fn run_cmd_stdout(cmd: &mut process::Command) -> Result<Vec<u8>> {
     let out = cmd
         .output()
-        .with_context(|| format!("run {}", cmd_desc(cmd)))?;
+        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?;
 
     if !out.status.success() {
         let mut errmsg = format!("{} failed: {}", cmd_desc(cmd), out.status);
