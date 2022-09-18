@@ -1,0 +1,16 @@
+[package]
+name = "restack-testtools"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+test = true
+
+[dependencies]
+anyhow = "1.0"
+lazy_static = "1.4.0"
+sha2 = "0.10.5"
+tar = "0.4.38"
+tempfile = "3.3.0"
+xz2 = "0.1.7"

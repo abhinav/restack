@@ -257,6 +257,16 @@ dependencies = [
  "argh",
  "dirs",
  "lazy_static",
+ "restack-testtools",
+ "tempfile",
+]
+
+[[package]]
+name = "restack-testtools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lazy_static",
  "sha2",
  "tar",
  "tempfile",

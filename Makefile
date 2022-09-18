@@ -2,12 +2,13 @@ GRCOV ?= grcov
 RELEASE ?=
 GRCOV_FLAGS = \
 	--source-dir . \
+	--guess-directory-when-missing \
 	--binary-path ./target/debug \
 	--branch \
 	--ignore-not-existing \
 	--ignore "**/tests/*" \
 	--excl-start '^mod tests \{' --excl-stop '^\}'
-TEST_FLAGS = --features 'anyhow/backtrace'
+TEST_FLAGS = --features 'anyhow/backtrace' --workspace
 
 ifeq ($(RELEASE),)
 BUILD_FLAGS =

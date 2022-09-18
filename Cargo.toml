@@ -17,11 +17,12 @@ dirs = "4.0.0"
 tempfile = "3.3.0"
 
 [dev-dependencies]
-xz2 = "0.1.7"
-tar = "0.4.38"
-sha2 = "0.10.5"
 lazy_static = "1.4.0"
+restack-testtools = { path = "./testtools" }
 
 [profile.release]
 strip = true
 lto = true
+
+[workspace]
+members = [".", "./testtools"]
