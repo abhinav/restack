@@ -3,6 +3,7 @@ use argh::FromArgs;
 
 mod edit;
 mod git;
+mod io;
 mod restack;
 mod setup;
 

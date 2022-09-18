@@ -1,6 +1,6 @@
 //! Implements the `restack edit` command.
 
-use std::{borrow::Cow, env, fs, io, path, process};
+use std::{borrow::Cow, env, fs, path, process};
 
 use anyhow::{bail, Context, Result};
 use argh::FromArgs;
@@ -54,53 +54,11 @@ pub fn run(args: &Args) -> Result<()> {
         bail!("editor returned non-zero status: {}", exit_code);
     }
 
-    match fs::rename(&out_file, &args.file) {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            // If /tmp is mounted to a different partition (it often is),
-            // attempting to move the file will cause the error:
-            //   invalid cross-device link
-            //
-            // For that case, fall back to copying the file and
-            // deleting the temporary file.
-            //
-            // This is not the default because move is atomic.
-            if err.raw_os_error() == Some(18) {
-                // TODO: Use io::ErrorKind::CrossesDevices after
-                // https://github.com/rust-lang/rust/issues/86442.
-
-                unsafe_rename(&out_file, &args.file)
-            } else {
-                Err(anyhow::Error::new(err))
-            }
-        }
-    }
-    .with_context(|| {
+    crate::io::rename(&out_file, &args.file).with_context(|| {
         format!(
             "overwrite {} with {}",
             &args.file.display(),
             &out_file.display()
         )
     })
-}
-
-/// Renames a file by copying its contents into a new file non-atomically,
-/// and deleting the original file.
-///
-/// This is necessary because on Linux, we cannot move the file across
-/// filesystem boundaries, and /tmp is often mounted on a different file system
-/// than the user's working directory.
-fn unsafe_rename(src: &path::Path, dst: &path::Path) -> Result<()> {
-    let md = fs::metadata(src).with_context(|| format!("inspect {}", src.display()))?;
-
-    {
-        let mut r = fs::File::open(src).context("open source")?;
-        let mut w = fs::File::create(dst).context("open destination")?;
-        io::copy(&mut r, &mut w).context("copy contents")?;
-    }
-
-    fs::set_permissions(dst, md.permissions()).context("update destination permissions")?;
-    fs::remove_file(src).context("delete source file")?;
-
-    Ok(())
 }
