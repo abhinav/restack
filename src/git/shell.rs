@@ -5,8 +5,8 @@ use std::{
     borrow::Cow,
     ffi,
     fmt::Write,
-    io::{self, BufRead, Read},
-    path, process, thread,
+    io::{self, BufRead},
+    path, process,
 };
 
 #[cfg(test)]
@@ -87,24 +87,11 @@ impl Git for Shell {
         let mut cmd = self.cmd();
         cmd.args(&["show-ref", "--heads", "--abbrev"])
             .current_dir(dir)
-            .stderr(process::Stdio::piped())
+            .stderr(process::Stdio::inherit())
             .stdout(process::Stdio::piped());
         let mut child = cmd
             .spawn()
             .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?;
-
-        let stderr_thread = {
-            let mut stderr_reader = child.stderr.take().unwrap();
-
-            thread::spawn(move || -> Result<Vec<u8>> {
-                let mut output = Vec::new();
-                stderr_reader
-                    .read_to_end(&mut output)
-                    .context("Error reading stderr")?;
-
-                Ok(output)
-            })
-        };
 
         let mut branches: Vec<Branch> = Vec::new();
         {
@@ -127,36 +114,12 @@ impl Git for Shell {
             }
         }
 
-        let child_result = child.wait();
-        let stderr = stderr_thread
-            .join()
-            .unwrap() // TODO: handle thread panic
-            .map(|v| String::from_utf8(v).ok())
-            .unwrap_or(None);
-
-        // TODO: dedupe
-        match child_result {
-            Ok(status) => {
-                if !status.success() {
-                    let mut errmsg = format!("command {} failed: {}", cmd_desc(&cmd), status);
-                    if let Some(stderr) = stderr {
-                        if !stderr.is_empty() {
-                            write!(&mut errmsg, "\nstderr: {}", &stderr)?;
-                        }
-                    }
-                    bail!(errmsg);
-                }
-            }
-            Err(err) => {
-                let mut errmsg = format!("{} failed: {}", cmd_desc(&cmd), err);
-                if let Some(stderr) = stderr {
-                    if !stderr.is_empty() {
-                        write!(&mut errmsg, "\nstderr: {}", &stderr)?;
-                    }
-                }
-                bail!(errmsg);
-            }
-        };
+        let status = child
+            .wait()
+            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?;
+        if !status.success() {
+            bail!("{} failed: {}", cmd_desc(&cmd), status);
+        }
 
         Ok(branches)
     }
@@ -212,6 +175,7 @@ fn cmd_desc(cmd: &process::Command) -> Cow<str> {
 mod tests {
     use super::*;
     use crate::fixscript;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn git_dir() -> Result<()> {
@@ -303,6 +267,27 @@ mod tests {
     }
 
     #[test]
+    fn list_branches_many() -> Result<()> {
+        let fixture = fixscript::open("simple_many_branches.sh")?;
+
+        let shell = Shell::new();
+        let branches = shell.list_branches(fixture.dir())?;
+
+        let mut branch_names = branches
+            .iter()
+            .map(|b| b.name.as_ref())
+            .collect::<Vec<&str>>();
+        branch_names.sort();
+
+        assert_eq!(
+            &["bar", "baz", "foo", "main", "quux", "qux"],
+            branch_names.as_slice()
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn list_branches_not_a_repository() -> Result<()> {
         let tempdir = tempfile::tempdir()?;
         let dir = tempdir.path();
@@ -311,7 +296,7 @@ mod tests {
         let err = shell.list_branches(dir).unwrap_err();
 
         assert!(
-            format!("{}", err).contains("not a git repository"),
+            format!("{}", err).contains("git show-ref failed"),
             "got error: {}",
             err
         );
