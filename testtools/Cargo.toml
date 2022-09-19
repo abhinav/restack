@@ -10,7 +10,7 @@ test = true
 [dependencies]
 anyhow = "1.0"
 lazy_static = "1.4.0"
-sha2 = "0.10.5"
+sha2 = "0.10.6"
 tar = "0.4.38"
 tempfile = "3.3.0"
 xz2 = "0.1.7"
