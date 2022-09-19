@@ -60,7 +60,7 @@ fn rebase_head_name(git_dir: &path::Path) -> Result<String> {
                     return Err(err)
                         .with_context(|| format!("Failed to open {}", head_file.display()));
                 }
-            }
+            },
             Ok(mut f) => {
                 let mut name = String::new();
                 f.read_to_string(&mut name).with_context(|| {
@@ -69,7 +69,7 @@ fn rebase_head_name(git_dir: &path::Path) -> Result<String> {
 
                 let name = name.trim();
                 return Ok(name.strip_prefix("refs/heads/").unwrap_or(name).to_string());
-            }
+            },
         }
     }
 

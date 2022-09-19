@@ -27,7 +27,7 @@ where
             } else {
                 Err(anyhow::Error::new(err))
             }
-        }
+        },
     }
 }
 

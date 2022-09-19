@@ -33,7 +33,7 @@ pub fn run(args: &Args) -> Result<()> {
             Err(err) => return Err(err).context("Unable to look up EDITOR"),
             _ => {
                 bail!("No editor specified: please use --editor or set EDITOR")
-            }
+            },
         },
     };
 

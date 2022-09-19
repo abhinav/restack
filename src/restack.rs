@@ -85,10 +85,10 @@ where
             let cmd = parts.next();
             if let Some(cmd) = cmd {
                 match cmd {
-                    "f" | "fixup" | "s" | "squash" => {} // do nothing
+                    "f" | "fixup" | "s" | "squash" => {}, // do nothing
                     _ => {
                         restack.update_previous_branches()?;
-                    }
+                    },
                 }
             }
 
