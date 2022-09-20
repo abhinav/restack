@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-git init -b main
-
 die() {
 	echo >&2 "$@"
 	exit 1

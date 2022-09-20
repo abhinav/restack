@@ -8,7 +8,7 @@ mod restack;
 mod setup;
 
 #[cfg(test)]
-mod fixscript;
+mod gitscript;
 
 #[derive(Debug, FromArgs)]
 #[argh(subcommand)]

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use lazy_static::lazy_static;
-use restack_testtools::fixscript;
+use restack_testtools::gitscript;
 use std::{env, path};
 
 /// Root of the project directory.
@@ -9,11 +9,11 @@ use std::{env, path};
 /// to this path.
 const CARGO_MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
-type Fixture<'a> = fixscript::Fixture<'a>;
+type Fixture<'a> = gitscript::Fixture<'a>;
 
 lazy_static! {
-    static ref DEFAULT_GROUP: fixscript::Group =
-        fixscript::Group::new(path::PathBuf::from(CARGO_MANIFEST_DIR).join("fixtures"));
+    static ref DEFAULT_GROUP: gitscript::Group =
+        gitscript::Group::new(path::PathBuf::from(CARGO_MANIFEST_DIR).join("fixtures"));
 }
 
 /// Opens and returns a Fixture for the script at `script_path`,

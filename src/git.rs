@@ -82,7 +82,7 @@ mod tests {
     use std::os::unix::prelude::PermissionsExt;
 
     use super::*;
-    use crate::{fixscript, git::Shell};
+    use crate::{git::Shell, gitscript};
 
     #[test]
     fn not_a_repository() -> Result<()> {
@@ -102,7 +102,7 @@ mod tests {
 
     #[test]
     fn not_currently_rebasing() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_single_commit.sh")?;
+        let fixture = gitscript::open("empty_commit.sh")?;
 
         let git = Shell::new();
         let err = git.rebase_head_name(fixture.dir()).unwrap_err();
@@ -117,7 +117,7 @@ mod tests {
 
     #[test]
     fn corrpt_rebase_state_unable_to_open() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_single_commit.sh")?;
+        let fixture = gitscript::open("empty_commit.sh")?;
         {
             let mut path = fixture.dir().join(".git/rebase-apply");
             fs::create_dir(&path)?;
@@ -143,7 +143,7 @@ mod tests {
 
     #[test]
     fn corrupt_rebase_state_not_a_file() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_single_commit.sh")?;
+        let fixture = gitscript::open("empty_commit.sh")?;
         {
             let path = fixture.dir().join(".git/rebase-apply/head-name");
             fs::create_dir_all(&path)?;
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn mid_rebase() -> Result<()> {
-        let fixture = fixscript::open("mid_rebase.sh")?;
+        let fixture = gitscript::open("mid_rebase.sh")?;
 
         let git_shell = Shell::new();
         let rebase_head = git_shell.rebase_head_name(fixture.dir())?;

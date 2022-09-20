@@ -174,12 +174,12 @@ fn cmd_desc(cmd: &process::Command) -> Cow<str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fixscript;
+    use crate::gitscript;
     use pretty_assertions::assert_eq;
 
     #[test]
     fn git_dir() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_single_commit.sh")?;
+        let fixture = gitscript::open("empty_commit.sh")?;
 
         let shell = Shell::new();
         let git_dir = shell.git_dir(fixture.dir())?;
@@ -228,7 +228,7 @@ mod tests {
 
     #[test]
     fn list_branches_empty_repo() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_no_commits.sh")?;
+        let fixture = gitscript::open("empty.sh")?;
 
         let shell = Shell::new();
         let res = shell.list_branches(fixture.dir());
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn list_branches_single() -> Result<()> {
-        let fixture = fixscript::open("empty_repo_single_commit.sh")?;
+        let fixture = gitscript::open("empty_commit.sh")?;
 
         let shell = Shell::new();
         let branches = shell.list_branches(fixture.dir())?;
@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn list_branches_many() -> Result<()> {
-        let fixture = fixscript::open("simple_many_branches.sh")?;
+        let fixture = gitscript::open("simple_many_branches.sh")?;
 
         let shell = Shell::new();
         let branches = shell.list_branches(fixture.dir())?;
