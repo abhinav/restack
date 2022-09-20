@@ -22,7 +22,6 @@ jobs:
           - {target: arm-unknown-linux-musleabihf}
           - {target: x86_64-apple-darwin}
           - {target: aarch64-apple-darwin}
-          - {target: x86_64-pc-windows-gnu, bin: "restack.exe"}
 
     steps:
 
@@ -56,7 +55,7 @@ jobs:
       run: |
         tar -cvzf restack-${{ matrix.target }}.tar.gz \
              -C target/${{ matrix.target }}/release \
-             ${{ matrix.bin || 'restack' }}
+             restack
 
     - name: Upload archive
       uses: actions/upload-artifact@v3
