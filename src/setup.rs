@@ -3,6 +3,7 @@
 use std::{
     fs,
     io::{self, Write},
+    os::unix::fs::OpenOptionsExt,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -37,7 +38,11 @@ pub fn run(args: &Args) -> Result<()> {
         fs::create_dir_all(&path).context("Unable to create $HOME/.restack")?;
 
         path.push("edit.sh");
-        fs::File::create(&path)
+        fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .mode(0o755)
+            .open(&path)
             .and_then(|mut f| f.write_all(EDIT_SCRIPT))
             .context("Failed to write .restack/edit.sh")?;
 

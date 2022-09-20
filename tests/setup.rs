@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use std::{env, fs};
+use std::{env, fs, os::unix::fs::PermissionsExt};
 use tempfile::tempdir;
 
 const RESTACK: &str = env!("CARGO_BIN_EXE_restack");
@@ -23,6 +23,10 @@ fn setup_restack() -> Result<()> {
 
     let edit_script = home_dir.path().join(".restack/edit.sh");
     assert!(edit_script.exists(), "edit script does not exist");
+    {
+        let mode = edit_script.metadata()?.permissions().mode();
+        assert_ne!(mode & 0o111, 0, "file should be executable, got {}", mode);
+    }
 
     let stdout = duct::cmd!("git", "config", "--global", "sequence.editor")
         .env("HOME", home_dir.path())
