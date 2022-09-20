@@ -22,7 +22,7 @@ use anyhow::{bail, Context, Result};
 use sha2::Digest;
 use std::fmt::Debug;
 use std::result::Result as StdResult;
-use std::{borrow::Cow, env, ffi, fs, io, path, process};
+use std::{borrow::Cow, env, ffi, fs, io, path};
 
 /// Version of the format used by fixscript in generated archives.
 /// This helps ensure that we can change the format later.
@@ -154,10 +154,8 @@ impl Group {
         new_path.push(":");
         new_path.push((self.getenv)("PATH")?);
 
-        let status = process::Command::new("bash")
-            .args(&["-euo", "pipefail"]) // disallow failures
-            .arg(&script_path_abs)
-            .current_dir(tempdir.path())
+        duct::cmd!("bash", "-euo", "pipefail", &script_path_abs)
+            .dir(tempdir.path())
             .env_remove("GIT_DIR")
             .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
             .env("GIT_AUTHOR_EMAIL", "author@example.com")
@@ -166,11 +164,8 @@ impl Group {
             .env("GIT_COMMITTER_EMAIL", "committer@example.com")
             .env("GIT_COMMITTER_NAME", "committer")
             .env("PATH", &new_path)
-            .status()
+            .run()
             .with_context(|| format!("Could not run script {}", script_path_abs.display()))?;
-        if !status.success() {
-            bail!("fixture {} failed", script_name.as_ref().display());
-        }
 
         {
             let f = fs::File::create(&archive_path)
@@ -267,7 +262,7 @@ mod tests {
             .open("test.sh")
             .expect_err("fixture execution should fail");
         assert!(
-            format!("{}", err).contains("fixture test.sh failed"),
+            format!("{}", err).contains("Could not run script"),
             "unexpected message: {}",
             err
         );

@@ -216,21 +216,12 @@ mod tests {
 
         shell.set_global_config_str("user.name", "Test User")?;
 
-        let out = process::Command::new("git")
-            .args(&["config", "user.name"])
+        let stdout = duct::cmd!("git", "config", "user.name")
             .env("HOME", &home)
-            .current_dir(workdir.path())
-            .output()?;
-        assert!(
-            out.status.success(),
-            "failed to get git config: {}",
-            out.status
-        );
+            .dir(workdir.path())
+            .read()?;
 
-        assert_eq!(
-            std::str::from_utf8(&out.stdout).unwrap().trim(),
-            "Test User",
-        );
+        assert_eq!(stdout.trim(), "Test User");
 
         Ok(())
     }

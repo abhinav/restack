@@ -9,6 +9,7 @@ test = true
 
 [dependencies]
 anyhow = "1.0"
+duct = "0.13.5"
 lazy_static = "1.4.0"
 sha2 = "0.10.6"
 tar = "0.4.38"
