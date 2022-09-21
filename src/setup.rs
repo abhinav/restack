@@ -7,16 +7,23 @@ use std::{
 };
 
 use anyhow::{anyhow, Context, Result};
-use argh::FromArgs;
 
 use crate::git::{self, Git};
 
-#[derive(Debug, PartialEq, Eq, FromArgs)]
-/// sets up restack
-#[argh(subcommand, name = "setup")]
+/// Configures Git to use restack during an interactive rebase.
+///
+/// If you prefer to configure Git manually, see:
+/// https://github.com/abhinav/restack#manual-setup
+///
+/// If you want restack to run on an opt-in basis, see:
+/// https://github.com/abhinav/restack#can-i-make-restacking-opt-in
+#[derive(Debug, PartialEq, Eq, clap::Args)]
 pub struct Args {
-    /// print the editor shell script
-    #[argh(switch, long = "print-edit-script")]
+    /// Print the shell script without setting it up.
+    ///
+    /// This shell script is used as the editor for interactive rebases.
+    /// It invokes 'restack edit' on the rebase instructions.
+    #[clap(long = "print-edit-script")]
     print_script: bool,
 }
 

@@ -3,20 +3,26 @@
 use std::{borrow::Cow, env, fs, path, process};
 
 use anyhow::{bail, Context, Result};
-use argh::FromArgs;
 
 use crate::{git, restack};
 
-/// edits the instruction list for an interactive rebase
-#[derive(Debug, PartialEq, Eq, FromArgs)]
-#[argh(subcommand, name = "edit")]
+/// Edits the provided rebase instruction list.
+///
+/// This augments the rebase instruction list,
+/// adding commands to move affected branches in the stack during the rebase.
+///
+/// Set up Git to use this command as the sequence.editor.
+/// See https://github.com/abhinav/restack#setup
+#[derive(Debug, PartialEq, Eq, clap::Args)]
 pub struct Args {
-    /// editor for rebase instructions
-    #[argh(option, short = 'e', long = "editor")]
+    /// Editor to use for rebase instructions.
+    ///
+    /// Defaults to $EDITOR.
+    #[clap(short = 'e', long = "editor")]
     editor: Option<String>,
 
-    #[argh(positional, arg_name = "FILE")]
-    /// file to edit
+    /// Path to the rebase instruction list.
+    #[clap(value_name = "FILE")]
     file: path::PathBuf,
 }
 
@@ -25,6 +31,7 @@ pub fn run(args: &Args) -> Result<()> {
     let cwd = env::current_dir().context("Could not determine current working directory")?;
     let temp_dir = tempfile::tempdir().context("Failed to create temporary directory")?;
 
+    // TODO: Check core.editor before checking EDITOR.
     let editor: Cow<str> = match args.editor.as_ref() {
         Some(s) if !s.is_empty() => Cow::Borrowed(s),
         _ => match env::var("EDITOR") {

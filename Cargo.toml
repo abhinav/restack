@@ -2,7 +2,7 @@
 name = "restack"
 version = "0.6.0"
 edition = "2021"
-description = "Makes git rebase --interactive nicer."
+description = "Teaches git rebase --interactive about your branches."
 
 [[bin]]
 name = "restack"
@@ -12,7 +12,7 @@ test = true
 
 [dependencies]
 anyhow = "1.0"
-argh = "0.1.8"
+clap = { version = "3.2.22", default-features = false, features = ["std", "derive"] }
 dirs = "4.0.0"
 tempfile = "3.3.0"
 

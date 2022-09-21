@@ -1,5 +1,5 @@
 use anyhow::Result;
-use argh::FromArgs;
+use clap::Parser;
 
 mod edit;
 mod git;
@@ -10,22 +10,21 @@ mod setup;
 #[cfg(test)]
 mod gitscript;
 
-#[derive(Debug, FromArgs)]
-#[argh(subcommand)]
+#[derive(Debug, clap::Subcommand)]
 enum Command {
     Setup(setup::Args),
     Edit(edit::Args),
 }
 
-#[derive(Debug, FromArgs)]
-/// restack makes git rebase --interactive nicer.
+#[derive(Debug, clap::Parser)]
+#[clap(author, version, about)]
 struct Args {
-    #[argh(subcommand)]
+    #[clap(subcommand)]
     cmd: Command,
 }
 
 fn main() -> Result<()> {
-    let args: Args = argh::from_env();
+    let args: Args = Args::parse();
     match args.cmd {
         Command::Setup(args) => setup::run(&args),
         Command::Edit(args) => edit::run(&args),
