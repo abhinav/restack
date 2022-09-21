@@ -4,24 +4,24 @@ on:
   push:
     tags: ['v*']
 
+  # Support running this manually without uploading to test out the workflow.
+  workflow_dispatch:
+
 jobs:
 
   build:
     runs-on: ubuntu-latest
 
-    # Only release pushes of tags starting with v.
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-
     strategy:
       matrix:
         include:
           # Linux
-          - {target: x86_64-unknown-linux-musl}
-          - {target: aarch64-unknown-linux-musl}
-            # - {target: armv7-unknown-linux-musleabihf}
-          - {target: arm-unknown-linux-musleabihf}
-          - {target: x86_64-apple-darwin}
-          - {target: aarch64-apple-darwin}
+          - {slug: linux-amd64, target: x86_64-unknown-linux-musl}
+          - {slug: linux-arm64, target: aarch64-unknown-linux-musl}
+          - {slug: linux-armv7, target: armv7-unknown-linux-musleabihf}
+          # macOS
+          - {slug: darwin-amd64, target: x86_64-apple-darwin}
+          - {slug: darwin-arm64, target: aarch64-apple-darwin}
 
     steps:
 
@@ -53,12 +53,13 @@ jobs:
 
     - name: Prepare archive
       run: |
-        tar -cvzf restack-${{ matrix.target }}.tar.gz \
+        tar -cvzf restack-${{ matrix.slug }}.tar.gz \
              -C target/${{ matrix.target }}/release \
              restack
 
     - name: Upload archive
       uses: actions/upload-artifact@v3
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       with:
         name: restack-archive
         path: restack-*.tar.gz
@@ -74,13 +75,27 @@ jobs:
       with:
         name: restack-archive
 
-    - name: Publish
+    - name: Publish Release
       uses: softprops/action-gh-release@v1
       with:
         files: 'restack-*.tar.gz'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Publish Homebrew tap
+      uses: Justintime50/homebrew-releaser@v1
+      with:
+        homebrew_owner: abhinav
+        homebrew_tap: homebrew-tap
+        formula_folder: .
+        github_token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        install: 'bin.install restack'
+        test: '#{bin/restack --version'
+
+        target_darwin_amd64: true
+        target_darwin_arm64: true
+        target_linux_amd64: true
+        target_linux_arm64: true
+
     # env:
     #   AUR_KEY: ${{ secrets.AUR_KEY }}
-    #   HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
