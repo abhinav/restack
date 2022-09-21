@@ -2,6 +2,8 @@ use anyhow::{Context, Result};
 use lazy_static::lazy_static;
 use pretty_assertions::assert_eq;
 use restack_testtools::gitscript;
+use rstest::rstest;
+use std::fmt::Write;
 use std::{fs, path};
 
 const RESTACK: &str = env!("CARGO_BIN_EXE_restack");
@@ -20,18 +22,22 @@ where
     DEFAULT_GITSCRIPT_GROUP.open(script_path)
 }
 
-#[test]
-fn simple_stack() -> Result<()> {
+#[rstest]
+#[case::editor_flag(true)]
+#[case::editor_env(false)]
+fn simple_stack(#[case] editor_flag: bool) -> Result<()> {
     let repo_fixture = open_fixture("simple_stack.sh")?;
 
-    duct::cmd!(
-        "git",
-        "config",
-        "sequence.editor",
-        format!("{} edit", RESTACK)
-    )
-    .dir(repo_fixture.dir())
-    .run()?;
+    let editor = FIXTURES_DIR.join("bin/add_break.sh");
+
+    let mut seq_editor = format!("{} edit", RESTACK);
+    if editor_flag {
+        write!(&mut seq_editor, " --editor {}", editor.display())?;
+    }
+
+    duct::cmd!("git", "config", "sequence.editor", seq_editor)
+        .dir(repo_fixture.dir())
+        .run()?;
 
     duct::cmd!("git", "rebase", "--interactive", "main")
         .env("EDITOR", FIXTURES_DIR.join("bin/add_break.sh"))
@@ -67,6 +73,37 @@ fn simple_stack() -> Result<()> {
             br
         );
     }
+
+    Ok(())
+}
+
+#[rstest]
+#[case::empty("", "No editor specified: please use --editor")]
+#[case::non_zero_status("false", "Editor returned non-zero status")]
+#[case::malicious("rm", "Could not overwrite")]
+fn editor_error(#[case] editor: &str, #[case] msg: &str) -> Result<()> {
+    let repo_fixture = open_fixture("simple_stack.sh")?;
+
+    let seq_editor = format!("{} edit", RESTACK);
+    duct::cmd!("git", "config", "sequence.editor", seq_editor)
+        .dir(repo_fixture.dir())
+        .run()?;
+
+    let out = duct::cmd!("git", "rebase", "--interactive", "main")
+        .env("EDITOR", editor)
+        .dir(repo_fixture.dir())
+        .stderr_capture()
+        .unchecked()
+        .run()?;
+
+    assert!(!out.status.success());
+    let stderr = String::from_utf8(out.stderr)?;
+    assert!(
+        stderr.contains(msg),
+        "unexpected stderr, must contain '{}':\n{}",
+        msg,
+        &stderr
+    );
 
     Ok(())
 }
