@@ -57,8 +57,15 @@ fn unsafe_rename(src: &path::Path, dst: &path::Path) -> Result<()> {
 mod tests {
     use super::*;
     use anyhow::Result;
+    use rstest::rstest;
 
-    fn test_rename(rename_fn: &dyn Fn(&path::Path, &path::Path) -> Result<()>) -> Result<()> {
+    #[rstest]
+    #[case::simple(&rename)]
+    #[case::explicit_unsafe(&unsafe_rename)]
+    #[case::cross_device(&cross_device_fail)]
+    fn rename_end_to_end(
+        #[case] rename_fn: &dyn Fn(&path::Path, &path::Path) -> Result<()>,
+    ) -> Result<()> {
         let tempdir = tempfile::tempdir()?;
 
         let from = tempdir.path().join("foo.txt");
@@ -73,18 +80,7 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn rename_simple() -> Result<()> {
-        test_rename(&rename)
-    }
-
-    #[test]
-    fn rename_unsafe() -> Result<()> {
-        test_rename(&unsafe_rename)
-    }
-
-    #[test]
-    fn rename_cross_device() -> Result<()> {
-        test_rename(&|from, to| rename_impl(|_, _| Err(io::Error::from_raw_os_error(18)), from, to))
+    fn cross_device_fail(from: &path::Path, to: &path::Path) -> Result<()> {
+        rename_impl(|_, _| Err(io::Error::from_raw_os_error(18)), from, to)
     }
 }

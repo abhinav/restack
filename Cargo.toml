@@ -22,6 +22,7 @@ indoc = "1.0.7"
 lazy_static = "1.4.0"
 pretty_assertions = "1.3.0"
 restack-testtools = { path = "./testtools" }
+rstest = "0.15.0"
 
 [profile.release]
 strip = true
