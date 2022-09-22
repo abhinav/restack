@@ -71,8 +71,7 @@ fn rebase_head_name(git_dir: &path::Path) -> Result<String> {
         }
     }
 
-    // TODO: Use a custom error
-    bail!("repository {} is not currently rebasing", git_dir.display())
+    bail!("Repository is not currently rebasing")
 }
 
 #[cfg(test)]
