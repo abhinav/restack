@@ -1,10 +1,8 @@
 //! Implements the `restack setup` command.
 
-use std::{
-    fs,
-    io::{self, Write},
-    os::unix::fs::OpenOptionsExt,
-};
+use std::fs;
+use std::io::{self, Write};
+use std::os::unix::fs::OpenOptionsExt;
 
 use anyhow::{anyhow, Context, Result};
 

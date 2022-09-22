@@ -20,12 +20,14 @@
 //!
 //! This approach is heavily inspired by Gitoxide's integration testing system.
 
-use anyhow::{bail, Context, Result};
-use sha2::Digest;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::result::Result as StdResult;
-use std::{borrow::Cow, env, ffi, fs, io, path};
+use std::{env, ffi, fs, io, path};
+
+use anyhow::{bail, Context, Result};
+use sha2::Digest;
 
 /// Version of the format used by gitscript in generated archives.
 /// This helps ensure that we can change the format later.
@@ -220,9 +222,10 @@ fn hash_file(p: &path::Path) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use anyhow::Result;
     use tempfile;
+
+    use super::*;
 
     fn getenv(s: &str) -> StdResult<String, env::VarError> {
         match s {

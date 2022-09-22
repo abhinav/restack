@@ -1,5 +1,7 @@
+use std::os::unix::fs::PermissionsExt;
+use std::{env, fs};
+
 use anyhow::{Context, Result};
-use std::{env, fs, os::unix::fs::PermissionsExt};
 use tempfile::tempdir;
 
 const RESTACK: &str = env!("CARGO_BIN_EXE_restack");

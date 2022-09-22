@@ -1,6 +1,7 @@
 //! Implements the `restack edit` command.
 
-use std::{borrow::Cow, env, fs, path, process};
+use std::borrow::Cow;
+use std::{env, fs, path, process};
 
 use anyhow::{bail, Context, Result};
 
