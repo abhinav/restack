@@ -10,6 +10,7 @@ test = true
 [dependencies]
 anyhow = "1.0"
 duct = "0.13.5"
+file-lock = "2.1.6"
 lazy_static = "1.4.0"
 sha2 = "0.10.6"
 tar = "0.4.38"

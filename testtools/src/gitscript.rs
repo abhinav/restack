@@ -116,8 +116,13 @@ impl Fixture<'_> {
     }
 
     fn write_archive(&self, dst: &path::Path) -> anyhow::Result<()> {
-        let f = fs::File::create(dst)?;
-        let out = xz2::write::XzEncoder::new(f, /* level */ 3);
+        let opts = file_lock::FileOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true);
+        let flock = file_lock::FileLock::lock(dst, true, opts)?;
+
+        let out = xz2::write::XzEncoder::new(&flock.file, /* level */ 3);
         let mut ar = tar::Builder::new(out);
         ar.append_dir_all(".", self.dir())?;
 
