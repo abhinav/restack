@@ -43,7 +43,10 @@ jobs:
         version: 0.9.1
 
     - name: Install cargo-zigbuild
-      run: cargo install cargo-zigbuild
+      uses: baptiste0928/cargo-install@v1
+      with:
+        crate: cargo-zigbuild
+        version: "0.12.3"
 
     - name: Build
       uses: actions-rs/cargo@v1
