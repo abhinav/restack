@@ -1,3 +1,6 @@
+#![feature(io_error_more)]
+#![feature(exit_status_error)]
+
 use anyhow::Result;
 use clap::Parser;
 

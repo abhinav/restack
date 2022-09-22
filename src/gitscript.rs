@@ -1,7 +1,8 @@
+use std::{env, path};
+
 use anyhow::Result;
 use lazy_static::lazy_static;
 use restack_testtools::gitscript;
-use std::{env, path};
 
 /// Root of the project directory.
 ///
