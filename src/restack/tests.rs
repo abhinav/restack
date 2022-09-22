@@ -1,13 +1,11 @@
 #![cfg(test)]
 
-use std::path;
-
+use super::Config;
+use crate::git;
 use anyhow::Result;
 use indoc::indoc;
 use pretty_assertions::assert_eq;
-
-use super::Config;
-use crate::git;
+use std::path;
 
 struct StubGit {
     branches: Vec<git::Branch>,

@@ -1,12 +1,16 @@
 //! Implements the Git trait by shelling out to git.
 
-use std::borrow::Cow;
+use anyhow::{bail, Context, Result};
+use std::{
+    borrow::Cow,
+    ffi,
+    fmt::Write,
+    io::{self, BufRead},
+    path, process,
+};
+
 #[cfg(test)]
 use std::collections::HashMap;
-use std::io::{self, BufRead};
-use std::{ffi, path, process};
-
-use anyhow::{Context, Result};
 
 use super::{Branch, Git};
 
@@ -56,12 +60,16 @@ impl Git for Shell {
         K: AsRef<ffi::OsStr>,
         V: AsRef<ffi::OsStr>,
     {
-        run_cmd(self.cmd().args(["config", "--global"]).arg(k).arg(v))
+        run_cmd(self.cmd().args(&["config", "--global"]).arg(k).arg(v))
     }
 
     /// git_dir reports the path to the .git directory for the provided directory.
     fn git_dir(&self, dir: &path::Path) -> Result<path::PathBuf> {
-        let cmd_out = run_cmd_stdout(self.cmd().args(["rev-parse", "--git-dir"]).current_dir(dir))?;
+        let cmd_out = run_cmd_stdout(
+            self.cmd()
+                .args(&["rev-parse", "--git-dir"])
+                .current_dir(dir),
+        )?;
 
         let mut cmd_out =
             String::from_utf8(cmd_out).context("Output of git rev-parse is not valid UTF-8")?;
@@ -77,7 +85,7 @@ impl Git for Shell {
 
     fn list_branches(&self, dir: &path::Path) -> Result<Vec<Branch>> {
         let mut cmd = self.cmd();
-        cmd.args(["show-ref", "--heads", "--abbrev"])
+        cmd.args(&["show-ref", "--heads", "--abbrev"])
             .current_dir(dir)
             .stderr(process::Stdio::inherit())
             .stdout(process::Stdio::piped());
@@ -106,11 +114,12 @@ impl Git for Shell {
             }
         }
 
-        child
+        let status = child
             .wait()
-            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?
-            .exit_ok()
-            .with_context(|| format!("{} failed", cmd_desc(&cmd)))?;
+            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?;
+        if !status.success() {
+            bail!("{} failed: {}", cmd_desc(&cmd), status);
+        }
 
         Ok(branches)
     }
@@ -119,10 +128,14 @@ impl Git for Shell {
 /// Runs the given command without capturing its output,
 /// and reports a meaningful error if it fails with a non-zero status code.
 fn run_cmd(cmd: &mut process::Command) -> Result<()> {
-    cmd.status()
-        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?
-        .exit_ok()
-        .with_context(|| format!("{} failed", cmd_desc(cmd)))
+    let status = cmd
+        .status()
+        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?;
+    if !status.success() {
+        bail!("{} failed: {}", cmd_desc(cmd), status);
+    }
+
+    Ok(())
 }
 
 /// Runs the given command and captures its output.
@@ -130,13 +143,17 @@ fn run_cmd(cmd: &mut process::Command) -> Result<()> {
 /// or if reading its output failed.
 fn run_cmd_stdout(cmd: &mut process::Command) -> Result<Vec<u8>> {
     let out = cmd
-        .stderr(process::Stdio::inherit())
         .output()
         .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?;
 
-    out.status
-        .exit_ok()
-        .with_context(|| format!("{} failed", cmd_desc(cmd)))?;
+    if !out.status.success() {
+        let mut errmsg = format!("{} failed: {}", cmd_desc(cmd), out.status);
+        if let Ok(stderr) = std::str::from_utf8(&out.stderr) {
+            write!(&mut errmsg, "\nstderr: {}", stderr)?;
+        }
+
+        bail!(errmsg);
+    }
 
     Ok(out.stdout)
 }
@@ -156,10 +173,9 @@ fn cmd_desc(cmd: &process::Command) -> Cow<str> {
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_eq;
-
     use super::*;
     use crate::gitscript;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn git_dir() -> Result<()> {
@@ -181,7 +197,7 @@ mod tests {
         let err = shell.git_dir(dir).unwrap_err();
 
         assert!(
-            format!("{}", err).contains("rev-parse failed"),
+            format!("{}", err).contains("not a git repository"),
             "got error: {}",
             err
         );
@@ -196,12 +212,12 @@ mod tests {
         let home = homedir.path();
 
         let mut shell = Shell::new();
-        shell.env("HOME", home);
+        shell.env("HOME", &home);
 
         shell.set_global_config_str("user.name", "Test User")?;
 
         let stdout = duct::cmd!("git", "config", "user.name")
-            .env("HOME", home)
+            .env("HOME", &home)
             .dir(workdir.path())
             .read()?;
 

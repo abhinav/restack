@@ -1,11 +1,10 @@
-use std::fmt::Write;
-use std::{fs, path};
-
 use anyhow::{Context, Result};
 use lazy_static::lazy_static;
 use pretty_assertions::assert_eq;
 use restack_testtools::gitscript;
 use rstest::rstest;
+use std::fmt::Write;
+use std::{fs, path};
 
 const RESTACK: &str = env!("CARGO_BIN_EXE_restack");
 

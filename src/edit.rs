@@ -1,7 +1,6 @@
 //! Implements the `restack edit` command.
 
-use std::borrow::Cow;
-use std::{env, fs, path, process};
+use std::{borrow::Cow, env, fs, path, process};
 
 use anyhow::{bail, Context, Result};
 
@@ -57,15 +56,16 @@ pub fn run(args: &Args) -> Result<()> {
         cfg.restack(Some("origin"), infile, outfile)?;
     };
 
-    process::Command::new("sh")
+    let exit_code = process::Command::new("sh")
         .arg("-c")
         .arg(format!("{} \"$1\"", editor))
         .arg(editor.as_ref())
         .arg(&out_file)
         .status()
-        .context("Could not run EDITOR")?
-        .exit_ok()
-        .context("Editor returned non-zero status")?;
+        .context("Could not run EDITOR")?;
+    if !exit_code.success() {
+        bail!("Editor returned non-zero status: {}", exit_code);
+    }
 
     crate::io::rename(&out_file, &args.file).with_context(|| {
         format!(

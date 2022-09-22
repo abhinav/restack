@@ -22,6 +22,8 @@ jobs:
     - name: Setup Rust
       uses: actions-rs/toolchain@v1
       with:
+        toolchain: 1.63.0
+        profile: minimal
         components: rustfmt, clippy, llvm-tools-preview
 
     - name: Setup Rust cache
@@ -36,6 +38,7 @@ jobs:
       uses: extractions/setup-just@v1
       with:
         just-version: 1.5.0
+
 
     - name: Lint
       run: just lint
