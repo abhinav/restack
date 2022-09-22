@@ -20,7 +20,9 @@ fn open_fixture<P>(script_path: P) -> Result<gitscript::Fixture<'static>>
 where
     P: AsRef<path::Path>,
 {
-    DEFAULT_GITSCRIPT_GROUP.open(script_path)
+    DEFAULT_GITSCRIPT_GROUP
+        .open(script_path)
+        .map_err(anyhow::Error::from)
 }
 
 #[rstest]

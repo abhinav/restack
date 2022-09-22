@@ -22,5 +22,5 @@ lazy_static! {
 ///
 /// The path must be relative to the "fixtures" directory of the repository.
 pub fn open<P: AsRef<path::Path>>(script_path: P) -> Result<Fixture<'static>> {
-    DEFAULT_GROUP.open(script_path)
+    DEFAULT_GROUP.open(script_path).map_err(anyhow::Error::from)
 }
