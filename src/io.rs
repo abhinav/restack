@@ -21,9 +21,7 @@ where
             // deleting the temporary file.
             //
             // This is not the default because move is atomic.
-            if err.raw_os_error() == Some(18) {
-                // TODO: Use io::ErrorKind::CrossesDevices after
-                // https://github.com/rust-lang/rust/issues/86442.
+            if err.kind() == io::ErrorKind::CrossesDevices {
                 unsafe_rename(src, dst)
             } else {
                 Err(anyhow::Error::new(err))
