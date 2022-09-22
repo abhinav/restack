@@ -1,12 +1,10 @@
 //! Gates access to Git for the rest of restack.
 //! None of the production code in restack should call git directly.
 
+use std::io::{self, Read};
+use std::{ffi, fs, path};
+
 use anyhow::{bail, Context, Result};
-use std::{
-    ffi, fs,
-    io::{self, Read},
-    path,
-};
 
 mod shell;
 
@@ -82,7 +80,8 @@ mod tests {
     use std::os::unix::prelude::PermissionsExt;
 
     use super::*;
-    use crate::{git::Shell, gitscript};
+    use crate::git::Shell;
+    use crate::gitscript;
 
     #[test]
     fn not_a_repository() -> Result<()> {

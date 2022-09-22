@@ -1,11 +1,11 @@
 //! Implements the core restacking logic.
 
-use crate::git;
+use std::io::{self, BufRead, Write};
+use std::path;
+
 use anyhow::{Context, Result};
-use std::{
-    io::{self, BufRead, Write},
-    path,
-};
+
+use crate::git;
 
 #[cfg(test)]
 mod tests;

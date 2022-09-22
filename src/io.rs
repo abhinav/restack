@@ -1,5 +1,6 @@
-use anyhow::{Context, Result};
 use std::{fs, io, path};
+
+use anyhow::{Context, Result};
 
 pub fn rename(src: &path::Path, dst: &path::Path) -> Result<()> {
     rename_impl(|src, dst| fs::rename(src, dst), src, dst)
@@ -20,9 +21,7 @@ where
             // deleting the temporary file.
             //
             // This is not the default because move is atomic.
-            if err.raw_os_error() == Some(18) {
-                // TODO: Use io::ErrorKind::CrossesDevices after
-                // https://github.com/rust-lang/rust/issues/86442.
+            if err.kind() == io::ErrorKind::CrossesDevices {
                 unsafe_rename(src, dst)
             } else {
                 Err(anyhow::Error::new(err))
@@ -55,9 +54,10 @@ fn unsafe_rename(src: &path::Path, dst: &path::Path) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use anyhow::Result;
     use rstest::rstest;
+
+    use super::*;
 
     #[rstest]
     #[case::simple(&rename)]

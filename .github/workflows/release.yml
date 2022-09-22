@@ -10,18 +10,35 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         include:
           # Linux
-          - {slug: linux-amd64, target: x86_64-unknown-linux-musl}
-          - {slug: linux-arm64, target: aarch64-unknown-linux-musl}
-          - {slug: linux-armv7, target: armv7-unknown-linux-musleabihf}
+          - slug: linux-amd64
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - slug: linux-arm64
+            target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            linker: aarch64-linux-gnu-gcc
+            extra_toolchain: gcc-aarch64-linux-gnu
+            strip: aarch64-linux-gnu-strip
+          - slug: linux-armv7
+            target: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            linker: arm-linux-gnueabihf-gcc
+            extra_toolchain: gcc-arm-linux-gnueabihf
+            strip: arm-linux-gnueabihf-strip
+
           # macOS
-          - {slug: darwin-amd64, target: x86_64-apple-darwin}
-          - {slug: darwin-arm64, target: aarch64-apple-darwin}
+          - slug: darwin-amd64
+            target: x86_64-apple-darwin
+            os: macos-latest
+          - slug: darwin-arm64
+            target: aarch64-apple-darwin
+            os: macos-latest
 
     steps:
 
@@ -31,28 +48,38 @@ jobs:
     - name: Setup Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: 1.63.0
-        profile: minimal
         target: ${{ matrix.target }}
-        override: true
+        profile: minimal
+
+    - name: Install additional toolchains
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_toolchain != '' }}
+      run: |
+        set -x
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.extra_toolchain }}
+
+        mkdir -p .cargo
+        cat > .cargo/config <<EOF
+        [target.${{ matrix.target }}]
+        linker = "${{ matrix.linker }}"
+        EOF
 
     - uses: Swatinem/rust-cache@v2
-
-    - uses: goto-bus-stop/setup-zig@v1
-      with:
-        version: 0.9.1
-
-    - name: Install cargo-zigbuild
-      uses: baptiste0928/cargo-install@v1
-      with:
-        crate: cargo-zigbuild
-        version: "0.12.3"
 
     - name: Build
       uses: actions-rs/cargo@v1
       with:
-        command: zigbuild
+        command: build
         args: --target ${{ matrix.target }} --release
+
+    - name: Strip binary
+      run: |
+        set -x
+        strip=${{ matrix.strip || 'strip' }}
+        exe=target/${{ matrix.target }}/release/restack
+        echo "Before: $(wc -c < "$exe") bytes"
+        "$strip" target/${{ matrix.target }}/release/restack
+        echo "After: $(wc -c < "$exe") bytes"
 
     - name: Prepare archive
       run: |
