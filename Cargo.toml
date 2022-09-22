@@ -25,7 +25,6 @@ restack-testtools = { path = "./testtools" }
 rstest = "0.15.0"
 
 [profile.release]
-strip = true
 lto = true
 
 [workspace]
