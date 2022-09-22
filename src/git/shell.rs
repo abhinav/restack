@@ -11,7 +11,6 @@ use anyhow::{Context, Result};
 use super::{Branch, Git};
 
 /// Shell provides access to the git CLI.
-#[derive(Default)]
 pub struct Shell {
     /// envs is only available during tests and provides environment variable
     /// overrides.
@@ -22,7 +21,10 @@ pub struct Shell {
 impl Shell {
     /// Builds a new Shell, searching `$PATH` for a git executable.
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            #[cfg(test)]
+            envs: HashMap::new(),
+        }
     }
 
     /// Adds an environment variable to be set for git invocations.
@@ -59,7 +61,7 @@ impl Git for Shell {
         run_cmd(self.cmd().args(["config", "--global"]).arg(k).arg(v))
     }
 
-    /// git_dir reports the path to the .git directory for the provided directory.
+    /// `git_dir` reports the path to the .git directory for the provided directory.
     fn git_dir(&self, dir: &path::Path) -> Result<path::PathBuf> {
         let cmd_out = run_cmd_stdout(self.cmd().args(["rev-parse", "--git-dir"]).current_dir(dir))?;
 
@@ -252,7 +254,7 @@ mod tests {
             .iter()
             .map(|b| b.name.as_ref())
             .collect::<Vec<&str>>();
-        branch_names.sort();
+        branch_names.sort_unstable();
 
         assert_eq!(
             &["bar", "baz", "foo", "main", "quux", "qux"],

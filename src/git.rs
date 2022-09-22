@@ -122,11 +122,11 @@ mod tests {
             fs::create_dir(&path)?;
 
             path.push("head-name");
-            std::fs::write(&path, &[])?;
+            std::fs::write(&path, [])?;
 
             let mut perm = fs::metadata(&path)?.permissions();
             perm.set_mode(0o200);
-            fs::set_permissions(&path, perm)?
+            fs::set_permissions(&path, perm)?;
         }
 
         let git = Shell::new();

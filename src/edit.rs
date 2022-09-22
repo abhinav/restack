@@ -13,7 +13,7 @@ use crate::{git, restack};
 /// adding commands to move affected branches in the stack during the rebase.
 ///
 /// Set up Git to use this command as the sequence.editor.
-/// See https://github.com/abhinav/restack#setup
+/// See <https://github.com/abhinav/restack#setup>
 #[derive(Debug, PartialEq, Eq, clap::Args)]
 pub struct Args {
     /// Editor to use for rebase instructions.
@@ -47,11 +47,11 @@ pub fn run(args: &Args) -> Result<()> {
 
     let git_shell = git::Shell::new();
 
-    let out_file = temp_dir.path().join("git-rebase-todo");
+    let outfile_path = temp_dir.path().join("git-rebase-todo");
     {
         let infile = fs::File::open(&args.file).context("Failed while reading git-rebase-todo")?;
         let outfile =
-            fs::File::create(&out_file).context("Failed to create new git-rebase-todo")?;
+            fs::File::create(&outfile_path).context("Failed to create new git-rebase-todo")?;
         let cfg = restack::Config::new(&cwd, git_shell);
         // TODO: determine remote
         cfg.restack(Some("origin"), infile, outfile)?;
@@ -61,17 +61,17 @@ pub fn run(args: &Args) -> Result<()> {
         .arg("-c")
         .arg(format!("{} \"$1\"", editor))
         .arg(editor.as_ref())
-        .arg(&out_file)
+        .arg(&outfile_path)
         .status()
         .context("Could not run EDITOR")?
         .exit_ok()
         .context("Editor returned non-zero status")?;
 
-    crate::io::rename(&out_file, &args.file).with_context(|| {
+    crate::io::rename(&outfile_path, &args.file).with_context(|| {
         format!(
             "Could not overwrite {} with {}",
             &args.file.display(),
-            &out_file.display()
+            &outfile_path.display()
         )
     })
 }

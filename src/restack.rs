@@ -23,7 +23,7 @@ where
     Git: git::Git,
 {
     pub fn new(cwd: &'a path::Path, git: Git) -> Self {
-        Self { cwd, git }
+        Self { git, cwd }
     }
 
     /// restacks branches in the instruction list at `src` and writes the result to
@@ -109,7 +109,7 @@ where
 
             restack
                 .last_line_branches
-                .extend(all_branches.iter().filter(|b| b.shorthash == hash))
+                .extend(all_branches.iter().filter(|b| b.shorthash == hash));
         }
 
         restack.update_previous_branches()?;

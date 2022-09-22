@@ -11,10 +11,10 @@ use crate::git::{self, Git};
 /// Configures Git to use restack during an interactive rebase.
 ///
 /// If you prefer to configure Git manually, see:
-/// https://github.com/abhinav/restack#manual-setup
+/// <https://github.com/abhinav/restack#manual-setup>
 ///
 /// If you want restack to run on an opt-in basis, see:
-/// https://github.com/abhinav/restack#can-i-make-restacking-opt-in
+/// <https://github.com/abhinav/restack#can-i-make-restacking-opt-in>
 #[derive(Debug, PartialEq, Eq, clap::Args)]
 pub struct Args {
     /// Print the shell script without setting it up.

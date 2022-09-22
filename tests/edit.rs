@@ -16,7 +16,7 @@ lazy_static! {
         gitscript::Group::new(FIXTURES_DIR.as_path());
 }
 
-pub fn open_fixture<P>(script_path: P) -> Result<gitscript::Fixture<'static>>
+fn open_fixture<P>(script_path: P) -> Result<gitscript::Fixture<'static>>
 where
     P: AsRef<path::Path>,
 {
