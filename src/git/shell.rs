@@ -1,16 +1,13 @@
 //! Implements the Git trait by shelling out to git.
 
-use anyhow::{bail, Context, Result};
-use std::{
-    borrow::Cow,
-    ffi,
-    fmt::Write,
-    io::{self, BufRead},
-    path, process,
-};
-
+use std::borrow::Cow;
 #[cfg(test)]
 use std::collections::HashMap;
+use std::fmt::Write;
+use std::io::{self, BufRead};
+use std::{ffi, path, process};
+
+use anyhow::{bail, Context, Result};
 
 use super::{Branch, Git};
 
@@ -173,9 +170,10 @@ fn cmd_desc(cmd: &process::Command) -> Cow<str> {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::*;
     use crate::gitscript;
-    use pretty_assertions::assert_eq;
 
     #[test]
     fn git_dir() -> Result<()> {

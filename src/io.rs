@@ -1,5 +1,6 @@
-use anyhow::{Context, Result};
 use std::{fs, io, path};
+
+use anyhow::{Context, Result};
 
 pub fn rename(src: &path::Path, dst: &path::Path) -> Result<()> {
     rename_impl(|src, dst| fs::rename(src, dst), src, dst)
@@ -55,9 +56,10 @@ fn unsafe_rename(src: &path::Path, dst: &path::Path) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use anyhow::Result;
     use rstest::rstest;
+
+    use super::*;
 
     #[rstest]
     #[case::simple(&rename)]
