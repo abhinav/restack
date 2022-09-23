@@ -1,6 +1,7 @@
 #![feature(byte_slice_trim_ascii)]
 #![feature(exit_status_error)]
 #![feature(io_error_more)]
+#![feature(slice_group_by)]
 
 use anyhow::Result;
 use clap::Parser;
