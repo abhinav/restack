@@ -45,7 +45,11 @@ const REBASE_STATE_DIRS: &[&str] = &["rebase-apply", "rebase-merge"];
 
 /// Reports the branch currently being rebased.
 ///
-/// This functionality is not supported natively by the `git` command.
+/// This functionality is not supported natively by the `git` command
+/// so we inspect internals.
+///
+/// git stores the name of the rebase branch in a file named "head-name"
+/// inside either the .git/rebase-apply directory or .git/rebase-merge.
 /// The logic was borrowed from `git`'s [own implementation][1].
 ///
 /// [1]: https://github.com/git/git/blob/2f0e14e649d69f9535ad6a086c1b1b2d04436ef5/wt-status.c#L1473

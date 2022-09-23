@@ -32,7 +32,7 @@ pub fn run(args: &Args) -> Result<()> {
     let cwd = env::current_dir().context("Could not determine current working directory")?;
     let temp_dir = tempfile::tempdir().context("Failed to create temporary directory")?;
 
-    // TODO: Check core.editor before checking EDITOR.
+    // TODO: Check core.editor, GIT_EDITOR, and then EDITOR.
     let editor: Cow<str> = match args.editor.as_ref() {
         Some(s) if !s.is_empty() => Cow::Borrowed(s),
         _ => match env::var("EDITOR") {
@@ -47,6 +47,8 @@ pub fn run(args: &Args) -> Result<()> {
 
     let git_shell = git::Shell::new();
 
+    // The file should be named git-rebase-todo to make file-type detection
+    // in different editors work correctly.
     let outfile_path = temp_dir.path().join("git-rebase-todo");
     {
         let infile = fs::File::open(&args.file).context("Failed while reading git-rebase-todo")?;
@@ -57,10 +59,14 @@ pub fn run(args: &Args) -> Result<()> {
         cfg.restack(Some("origin"), infile, outfile)?;
     };
 
+    // GIT_EDITOR/EDITOR can be any shell command, including FOO=bar $some_editor.
+    // So we need to use `sh` to interpret it instead of executing it directly.
+    // We baically run,
+    //   sh -c "$GIT_EDITOR $1" "restack" $FILE
     process::Command::new("sh")
         .arg("-c")
         .arg(format!("{} \"$1\"", editor))
-        .arg(editor.as_ref())
+        .arg("restack")
         .arg(&outfile_path)
         .status()
         .context("Could not run EDITOR")?

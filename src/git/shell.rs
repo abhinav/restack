@@ -1,6 +1,5 @@
 //! Implements the Git trait by shelling out to git.
 
-use std::borrow::Cow;
 #[cfg(test)]
 use std::collections::HashMap;
 use std::io::{self, BufRead};
@@ -40,9 +39,10 @@ impl Shell {
     }
 
     /// Builds a `process::Command` for internal use.
-    #[allow(clippy::let_and_return, unused_mut)] // used in test
     fn cmd(&self) -> process::Command {
         let mut cmd = process::Command::new("git");
+        cmd.stderr(process::Stdio::inherit());
+
         #[cfg(test)]
         {
             cmd.envs(&self.envs);
@@ -58,18 +58,31 @@ impl Git for Shell {
         K: AsRef<ffi::OsStr>,
         V: AsRef<ffi::OsStr>,
     {
-        run_cmd(self.cmd().args(["config", "--global"]).arg(k).arg(v))
+        self.cmd()
+            .args(["config", "--global"])
+            .arg(k)
+            .arg(v)
+            .status()
+            .context("Unable to run git config")?
+            .exit_ok()
+            .context("git config failed")
     }
 
     /// `git_dir` reports the path to the .git directory for the provided directory.
     fn git_dir(&self, dir: &path::Path) -> Result<path::PathBuf> {
-        let cmd_out = run_cmd_stdout(self.cmd().args(["rev-parse", "--git-dir"]).current_dir(dir))?;
+        let out = self
+            .cmd()
+            .args(["rev-parse", "--git-dir"])
+            .current_dir(dir)
+            .output()
+            .context("Failed to run git rev-parse")?;
 
-        let mut cmd_out =
-            String::from_utf8(cmd_out).context("Output of git rev-parse is not valid UTF-8")?;
-        cmd_out.truncate(cmd_out.trim_end().len());
+        out.status.exit_ok().context("git rev-parse failed")?;
 
-        let mut git_dir = path::PathBuf::from(cmd_out);
+        let output = std::str::from_utf8(out.stdout.trim_ascii_end())
+            .context("Output of git rev-parse is not valid UTF-8")?;
+
+        let mut git_dir = path::PathBuf::from(output);
         if git_dir.is_relative() {
             git_dir = dir.join(git_dir);
         }
@@ -81,78 +94,40 @@ impl Git for Shell {
         let mut cmd = self.cmd();
         cmd.args(["show-ref", "--heads", "--abbrev"])
             .current_dir(dir)
-            .stderr(process::Stdio::inherit())
             .stdout(process::Stdio::piped());
-        let mut child = cmd
-            .spawn()
-            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?;
+        let mut child = cmd.spawn().context("Unable to run git show-ref")?;
 
         let mut branches: Vec<Branch> = Vec::new();
+        let Some(stdout) = child.stdout.take() else {
+                unreachable!("Stdio::piped() always sets child.stdout");
+            };
         {
-            let stdout = child.stdout.take().unwrap();
             let rdr = io::BufReader::new(stdout);
             for line in rdr.lines() {
                 let line = line.context("Could not read 'git show-ref' output")?;
                 let mut parts = line.split(' ');
-                || -> Option<()> {
-                    let hash = parts.next()?;
-                    let refname = parts.next()?;
-                    let name = refname.strip_prefix("refs/heads/")?;
-                    branches.push(Branch {
-                        name: name.to_string(),
-                        shorthash: hash.to_string(),
-                    });
+                // Output of git show-ref is in the form,
+                //   $hash1 refs/heads/$name1
+                //   $hash2 refs/heads/$name2
 
-                    Some(())
-                }();
+                let Some(hash) = parts.next() else { continue };
+                let Some(refname) = parts.next() else { continue };
+                let Some(name) = refname.strip_prefix("refs/heads/") else { continue };
+
+                branches.push(Branch {
+                    name: name.to_string(),
+                    shorthash: hash.to_string(),
+                });
             }
         }
 
         child
             .wait()
-            .with_context(|| format!("Unable to run {}", cmd_desc(&cmd)))?
+            .context("Unable to start git show-ref")?
             .exit_ok()
-            .with_context(|| format!("{} failed", cmd_desc(&cmd)))?;
+            .context("git show-ref failed")?;
 
         Ok(branches)
-    }
-}
-
-/// Runs the given command without capturing its output,
-/// and reports a meaningful error if it fails with a non-zero status code.
-fn run_cmd(cmd: &mut process::Command) -> Result<()> {
-    cmd.status()
-        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?
-        .exit_ok()
-        .with_context(|| format!("{} failed", cmd_desc(cmd)))
-}
-
-/// Runs the given command and captures its output.
-/// Reports a meaningful error if the command fails with a non-zero status code,
-/// or if reading its output failed.
-fn run_cmd_stdout(cmd: &mut process::Command) -> Result<Vec<u8>> {
-    let out = cmd
-        .stderr(process::Stdio::inherit())
-        .output()
-        .with_context(|| format!("Unable to run {}", cmd_desc(cmd)))?;
-
-    out.status
-        .exit_ok()
-        .with_context(|| format!("{} failed", cmd_desc(cmd)))?;
-
-    Ok(out.stdout)
-}
-
-/// Generates a meaningful description of a command.
-fn cmd_desc(cmd: &process::Command) -> Cow<str> {
-    let prog = cmd.get_program().to_string_lossy();
-    let subcmd = cmd
-        .get_args()
-        .map(ffi::OsStr::to_string_lossy)
-        .find(|s| !s.starts_with('-'));
-    match subcmd {
-        Some(subcmd) => Cow::Owned(format!("{} {}", prog, subcmd)),
-        None => prog,
     }
 }
 

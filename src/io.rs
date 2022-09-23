@@ -2,6 +2,8 @@ use std::{fs, io, path};
 
 use anyhow::{Context, Result};
 
+/// rename is a version of fs::rename that can
+/// gracefully recover from cross-device rename errors on Linux.
 pub fn rename(src: &path::Path, dst: &path::Path) -> Result<()> {
     rename_impl(|src, dst| fs::rename(src, dst), src, dst)
 }

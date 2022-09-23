@@ -39,6 +39,7 @@ pub fn run(args: &Args) -> Result<()> {
     let home = dirs::home_dir().ok_or_else(|| anyhow!("Home directory not found"))?;
 
     let edit_path = {
+        // TODO: Consider using xdg-home instead.
         let mut path = home.join(".restack");
         fs::create_dir_all(&path).context("Unable to create $HOME/.restack")?;
 
