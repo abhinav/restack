@@ -1,3 +1,18 @@
+//! restack is a command line tool that sits between `git rebase -i`
+//! and your editor, with the intent of making the default rebase smarter.
+//!
+//! It doess so by making `git rebase -i` aware of intermediate branches
+//! attached to commits you're changing during a rebase.
+//! If it finds commits with associated branches,
+//! it introduces new instructions to the rebase instruction list
+//! that will update these branches if the commits move.
+//!
+//! Read more in the [README][1] and the [associated blog post][2].
+//!
+//! [1]: https://github.com/abhinav/restack/blob/main/README.md
+//! [2]: https://abhinavg.net/posts/restacking-branches/
+
+#![warn(missing_docs)]
 #![feature(byte_slice_trim_ascii)]
 #![feature(exit_status_error)]
 #![feature(io_error_more)]

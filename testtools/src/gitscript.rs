@@ -32,17 +32,30 @@ use sha2::Digest;
 /// This helps ensure that we can change the format later.
 const VERSION: &str = "2";
 
+/// Error returned by operations in this package.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    /// Indicates that the archive was out of date.
+    ///
+    /// Externally, this is only ever returned if gitscript is run in CI
+    /// with an outdated or missing archive:
+    /// all archives must be generated and checked in locally.
     #[error("Archive {path:?} is outdated")]
-    OutdatedArchive { path: path::PathBuf },
+    OutdatedArchive {
+        /// Path to the archive that was outdated.
+        path: path::PathBuf,
+    },
 
+    /// Returned when a fixture script failed to execute.
     #[error("Script {path:?} failed")]
     ScriptFailed {
+        /// Path to the script that failed.
         path: path::PathBuf,
+        /// Error returned by the script when it failed.
         source: anyhow::Error,
     },
 
+    /// All other failures from this module.
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -143,6 +156,8 @@ pub struct Group {
 }
 
 impl Group {
+    /// Builds a new fixture group rooted inside the given directory.
+    /// All generated fixtures will reside inside the directory.
     pub fn new<P: AsRef<path::Path>>(p: P) -> Self {
         Self {
             dir: p.as_ref().to_path_buf(),
