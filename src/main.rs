@@ -18,8 +18,7 @@
 #![feature(io_error_more)]
 #![feature(slice_group_by)]
 
-use anyhow::Result;
-use clap::Parser;
+use anyhow::{anyhow, bail, Result};
 
 mod edit;
 mod git;
@@ -30,23 +29,48 @@ mod setup;
 #[cfg(test)]
 mod gitscript;
 
-#[derive(Debug, clap::Subcommand)]
-enum Command {
-    Setup(setup::Args),
-    Edit(edit::Args),
-}
+const USAGE: &str = "\
+USAGE:
+    restack <SUBCOMMAND>
 
-#[derive(Debug, clap::Parser)]
-#[clap(author, version, about)]
-struct Args {
-    #[clap(subcommand)]
-    cmd: Command,
-}
+Teaches git rebase --interactive about your branches.
+
+OPTIONS:
+    -h, --help       Print help information.
+    -V, --version    Print version information.
+
+SUBCOMMANDS:
+    edit     Edits the provided rebase instruction list
+    setup    Configures Git to use restack during an interactive rebase
+";
 
 fn main() -> Result<()> {
-    let args: Args = Args::parse();
-    match args.cmd {
-        Command::Setup(args) => setup::run(&args),
-        Command::Edit(args) => edit::run(&args),
+    let mut parser = lexopt::Parser::from_env();
+    let Some(arg) = parser.next()? else {
+        bail!("Please provide a subcommand. See restack --help for more information.");
+    };
+
+    match arg {
+        lexopt::Arg::Short('h') | lexopt::Arg::Long("help") => {
+            eprint!("{}", USAGE);
+            Ok(())
+        },
+        lexopt::Arg::Short('V') | lexopt::Arg::Long("version") => {
+            println!("restack {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        },
+        lexopt::Arg::Value(ref cmd) => {
+            let cmd = cmd
+                .to_str()
+                .ok_or_else(|| anyhow!("{:?} is not a valid unicode string", cmd))?;
+            match cmd {
+                "edit" => edit::run(parser),
+                "setup" => setup::run(parser),
+                _ => {
+                    bail!("Unrecognized command '{}'", cmd);
+                },
+            }
+        },
+        _ => Err(arg.unexpected().into()),
     }
 }

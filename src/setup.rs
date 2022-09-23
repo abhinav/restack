@@ -8,20 +8,32 @@ use anyhow::{anyhow, Context, Result};
 
 use crate::git::{self, Git};
 
-/// Configures Git to use restack during an interactive rebase.
-///
-/// If you prefer to configure Git manually, see:
-/// <https://github.com/abhinav/restack#manual-setup>
-///
-/// If you want restack to run on an opt-in basis, see:
-/// <https://github.com/abhinav/restack#can-i-make-restacking-opt-in>
-#[derive(Debug, PartialEq, Eq, clap::Args)]
-pub struct Args {
-    /// Print the shell script without setting it up.
-    ///
-    /// This shell script is used as the editor for interactive rebases.
-    /// It invokes 'restack edit' on the rebase instructions.
-    #[clap(long = "print-edit-script")]
+const USAGE: &str = "\
+USAGE:
+    restack setup [OPTIONS]
+
+Configures Git to use restack during an interactive rebase.
+If you prefer to configure Git manually, see,
+    https://github.com/abhinav/restack#manual-setup
+If you want restack to run on an opt-in basis, see,
+    https://github.com/abhinav/restack#can-i-make-restacking-opt-in
+
+OPTIONS:
+    -h, --help
+            Print help information.
+
+        --print-edit-script
+            Print the shell script without setting it up.
+
+            This shell script is used as the editor for interactive rebases.
+            It invokes 'restack
+            edit' on the rebase instructions.
+";
+
+/// Arguments for the "restack setup" command.
+#[derive(Debug, PartialEq, Eq)]
+struct Args {
+    /// If set, the shell script will be printed instead of being installed.
     print_script: bool,
 }
 
@@ -29,7 +41,28 @@ pub struct Args {
 static EDIT_SCRIPT: &[u8] = include_bytes!("edit.sh");
 
 /// Runs the `restack setup` command.
-pub fn run(args: &Args) -> Result<()> {
+pub fn run(mut parser: lexopt::Parser) -> Result<()> {
+    let args = {
+        let mut args = Args {
+            print_script: false,
+        };
+
+        while let Some(arg) = parser.next()? {
+            match arg {
+                lexopt::Arg::Long("print-edit-script") => {
+                    args.print_script = true;
+                },
+                lexopt::Arg::Short('h') | lexopt::Arg::Long("help") => {
+                    eprint!("{}", USAGE);
+                    return Ok(());
+                },
+                _ => return Err(arg.unexpected().into()),
+            }
+        }
+
+        args
+    };
+
     if args.print_script {
         return io::stdout()
             .write_all(EDIT_SCRIPT)

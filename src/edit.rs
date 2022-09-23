@@ -3,32 +3,75 @@
 use std::borrow::Cow;
 use std::{env, fs, path, process};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 
 use crate::{git, restack};
 
-/// Edits the provided rebase instruction list.
-///
-/// This augments the rebase instruction list,
-/// adding commands to move affected branches in the stack during the rebase.
-///
-/// Set up Git to use this command as the sequence.editor.
-/// See <https://github.com/abhinav/restack#setup>
-#[derive(Debug, PartialEq, Eq, clap::Args)]
-pub struct Args {
-    /// Editor to use for rebase instructions.
-    ///
-    /// Defaults to $EDITOR.
-    #[clap(short = 'e', long = "editor")]
+const USAGE: &str = "\
+USAGE:
+    restack edit [OPTIONS] <FILE>
+
+Edits the provided rebase instruction list,
+adding commands to move affected branches in the stack during the rebase.
+
+To use this command, set it up as your sequence.editor in Git.
+See https://github.com/abhinav/restack#setup for more information.
+
+ARGS:
+    <FILE>
+            Path to the rebase instruction list
+
+OPTIONS:
+    -e, --editor <EDITOR>
+            Editor to use for rebase instructions.
+            Defaults to $EDITOR.
+
+    -h, --help
+            Print help information.
+";
+
+/// Arguments for the "restack edit" command.
+#[derive(Debug, PartialEq, Eq)]
+struct Args {
+    /// Editor to use, if any.
+    /// Defaults to $EDITOR, and if that's not set, to "vim".
     editor: Option<String>,
 
     /// Path to the rebase instruction list.
-    #[clap(value_name = "FILE")]
     file: path::PathBuf,
 }
 
 /// Runs the `restack edit` command.
-pub fn run(args: &Args) -> Result<()> {
+pub fn run(mut parser: lexopt::Parser) -> Result<()> {
+    let args = {
+        let mut editor: Option<String> = None;
+        let mut file: Option<path::PathBuf> = None;
+
+        while let Some(arg) = parser.next()? {
+            match arg {
+                lexopt::Arg::Short('e') | lexopt::Arg::Long("editor") => {
+                    let value = parser.value()?;
+                    let s = value
+                        .to_str()
+                        .ok_or_else(|| anyhow!("--editor argument is not a valid string"))?;
+                    editor = Some(s.to_string());
+                },
+                lexopt::Arg::Short('h') | lexopt::Arg::Long("help") => {
+                    eprint!("{}", USAGE);
+                    return Ok(());
+                },
+                lexopt::Arg::Value(value) => {
+                    file = Some(value.into());
+                },
+                _ => return Err(arg.unexpected().into()),
+            }
+        }
+
+        let Some(file) = file else { bail!("Please provide a file name"); };
+
+        Args { editor, file }
+    };
+
     let cwd = env::current_dir().context("Could not determine current working directory")?;
     let temp_dir = tempfile::tempdir().context("Failed to create temporary directory")?;
 
