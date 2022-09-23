@@ -95,10 +95,7 @@ where
             // Most lines go as-is.
             restack.write_line(&line)?;
 
-            let cmd = match cmd {
-                Some(cmd) => cmd,
-                None => continue,
-            };
+            let Some(cmd) = cmd else { continue; };
             let hash = match cmd {
                 "p" | "pick" | "r" | "reword" | "e" | "edit" => match parts.next() {
                     Some(s) => s,
@@ -138,10 +135,8 @@ impl<'a, O: io::Write> Restack<'a, O> {
         if self.updated_branches.is_empty() {
             return Ok(());
         }
-        let remote_name = match self.remote_name {
-            Some(r) => r,
-            None => return Ok(()),
-        };
+
+        let Some(remote_name) = self.remote_name else { return Ok(()); };
 
         if pad_before {
             writeln!(self.dst)?;
