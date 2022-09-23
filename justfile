@@ -35,4 +35,4 @@ _fmt:
 	cargo fmt --check
 
 _clippy:
-	cargo clippy
+	cargo clippy --workspace
