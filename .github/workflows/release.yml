@@ -50,6 +50,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         profile: minimal
+        components: rust-src
 
     - name: Install additional toolchains
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_toolchain != '' }}
@@ -70,7 +71,11 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --target ${{ matrix.target }} --release
+        args: >-
+          --target ${{ matrix.target }}
+          --release
+          -Z build-std=std,panic_abort
+          -Z build-std-features=panic_immediate_abort
 
     - name: Strip binary
       run: |
