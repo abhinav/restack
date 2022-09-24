@@ -1,0 +1,258 @@
+//! Implements the Git trait by shelling out to git.
+
+#[cfg(test)]
+use std::collections::HashMap;
+use std::io::{self, BufRead};
+use std::{ffi, path, process};
+
+use anyhow::{Context, Result};
+
+use super::{Branch, Git};
+
+/// Shell provides access to the git CLI.
+pub struct Shell {
+    /// envs is only available during tests and provides environment variable
+    /// overrides.
+    #[cfg(test)]
+    envs: HashMap<ffi::OsString, ffi::OsString>,
+}
+
+impl Shell {
+    /// Builds a new Shell, searching `$PATH` for a git executable.
+    pub fn new() -> Self {
+        Self {
+            #[cfg(test)]
+            envs: HashMap::new(),
+        }
+    }
+
+    /// Adds an environment variable to be set for git invocations.
+    #[cfg(test)]
+    pub fn env<K, V>(&mut self, k: K, v: V) -> &mut Self
+    where
+        K: AsRef<ffi::OsStr>,
+        V: AsRef<ffi::OsStr>,
+    {
+        self.envs
+            .insert(k.as_ref().to_os_string(), v.as_ref().to_os_string());
+        self
+    }
+
+    /// Builds a `process::Command` for internal use.
+    fn cmd(&self) -> process::Command {
+        let mut cmd = process::Command::new("git");
+        cmd.stderr(process::Stdio::inherit());
+
+        #[cfg(test)]
+        {
+            cmd.envs(&self.envs);
+        }
+
+        cmd
+    }
+}
+
+impl Git for Shell {
+    fn set_global_config_str<K, V>(&self, k: K, v: V) -> Result<()>
+    where
+        K: AsRef<ffi::OsStr>,
+        V: AsRef<ffi::OsStr>,
+    {
+        self.cmd()
+            .args(["config", "--global"])
+            .arg(k)
+            .arg(v)
+            .status()
+            .context("Unable to run git config")?
+            .exit_ok()
+            .context("git config failed")
+    }
+
+    /// `git_dir` reports the path to the .git directory for the provided directory.
+    fn git_dir(&self, dir: &path::Path) -> Result<path::PathBuf> {
+        let out = self
+            .cmd()
+            .args(["rev-parse", "--git-dir"])
+            .current_dir(dir)
+            .output()
+            .context("Failed to run git rev-parse")?;
+
+        out.status.exit_ok().context("git rev-parse failed")?;
+
+        let output = std::str::from_utf8(out.stdout.trim_ascii_end())
+            .context("Output of git rev-parse is not valid UTF-8")?;
+
+        let mut git_dir = path::PathBuf::from(output);
+        if git_dir.is_relative() {
+            git_dir = dir.join(git_dir);
+        }
+
+        Ok(git_dir)
+    }
+
+    fn list_branches(&self, dir: &path::Path) -> Result<Vec<Branch>> {
+        let mut cmd = self.cmd();
+        cmd.args(["show-ref", "--heads", "--abbrev"])
+            .current_dir(dir)
+            .stdout(process::Stdio::piped());
+        let mut child = cmd.spawn().context("Unable to run git show-ref")?;
+
+        let mut branches: Vec<Branch> = Vec::new();
+        let Some(stdout) = child.stdout.take() else {
+                unreachable!("Stdio::piped() always sets child.stdout");
+            };
+        {
+            let rdr = io::BufReader::new(stdout);
+            for line in rdr.lines() {
+                let line = line.context("Could not read 'git show-ref' output")?;
+                let mut parts = line.split(' ');
+                // Output of git show-ref is in the form,
+                //   $hash1 refs/heads/$name1
+                //   $hash2 refs/heads/$name2
+
+                let Some(hash) = parts.next() else { continue };
+                let Some(refname) = parts.next() else { continue };
+                let Some(name) = refname.strip_prefix("refs/heads/") else { continue };
+
+                branches.push(Branch {
+                    name: name.to_string(),
+                    shorthash: hash.to_string(),
+                });
+            }
+        }
+
+        child
+            .wait()
+            .context("Unable to start git show-ref")?
+            .exit_ok()
+            .context("git show-ref failed")?;
+
+        Ok(branches)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+    use crate::gitscript;
+
+    #[test]
+    fn git_dir() -> Result<()> {
+        let fixture = gitscript::open("empty_commit.sh")?;
+
+        let shell = Shell::new();
+        let git_dir = shell.git_dir(fixture.dir())?;
+
+        assert_eq!(git_dir, fixture.dir().join(".git"));
+        Ok(())
+    }
+
+    #[test]
+    fn git_dir_not_a_repository() -> Result<()> {
+        let tempdir = tempfile::tempdir()?;
+        let dir = tempdir.path();
+
+        let shell = Shell::new();
+        let err = shell.git_dir(dir).unwrap_err();
+
+        assert!(
+            format!("{}", err).contains("rev-parse failed"),
+            "got error: {}",
+            err
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn set_global_config_str() -> Result<()> {
+        let workdir = tempfile::tempdir()?;
+        let homedir = tempfile::tempdir()?;
+        let home = homedir.path();
+
+        let mut shell = Shell::new();
+        shell.env("HOME", home);
+
+        shell.set_global_config_str("user.name", "Test User")?;
+
+        let stdout = duct::cmd!("git", "config", "user.name")
+            .env("HOME", home)
+            .dir(workdir.path())
+            .read()?;
+
+        assert_eq!(stdout.trim(), "Test User");
+
+        Ok(())
+    }
+
+    #[test]
+    fn list_branches_empty_repo() -> Result<()> {
+        let fixture = gitscript::open("empty.sh")?;
+
+        let shell = Shell::new();
+        let res = shell.list_branches(fixture.dir());
+
+        assert!(res.is_err(), "expected error, got {:?}", res.unwrap());
+
+        Ok(())
+    }
+
+    #[test]
+    fn list_branches_single() -> Result<()> {
+        let fixture = gitscript::open("empty_commit.sh")?;
+
+        let shell = Shell::new();
+        let branches = shell.list_branches(fixture.dir())?;
+        assert!(
+            branches.len() == 1,
+            "expected a single item, got {:?}",
+            branches
+        );
+
+        let branch = &branches[0];
+        assert_eq!(branch.name, "main");
+        assert!(!branch.shorthash.is_empty(), "hash should not be empty");
+
+        Ok(())
+    }
+
+    #[test]
+    fn list_branches_many() -> Result<()> {
+        let fixture = gitscript::open("simple_many_branches.sh")?;
+
+        let shell = Shell::new();
+        let branches = shell.list_branches(fixture.dir())?;
+
+        let mut branch_names = branches
+            .iter()
+            .map(|b| b.name.as_ref())
+            .collect::<Vec<&str>>();
+        branch_names.sort_unstable();
+
+        assert_eq!(
+            &["bar", "baz", "foo", "main", "quux", "qux"],
+            branch_names.as_slice()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn list_branches_not_a_repository() -> Result<()> {
+        let tempdir = tempfile::tempdir()?;
+        let dir = tempdir.path();
+
+        let shell = Shell::new();
+        let err = shell.list_branches(dir).unwrap_err();
+
+        assert!(
+            format!("{}", err).contains("git show-ref failed"),
+            "got error: {}",
+            err
+        );
+
+        Ok(())
+    }
+}

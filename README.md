@@ -1,4 +1,4 @@
-# 📚 restack [![Go](https://github.com/abhinav/restack/actions/workflows/go.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/go.yml)
+# 📚 restack [![CI](https://github.com/abhinav/restack/actions/workflows/build.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/build.yml)
 
 restack augments the experience of performing an interactive Git rebase to make
 it more friendly to workflows that involve lots of interdependent branches.
@@ -39,10 +39,10 @@ Use one of the following options to install restack.
 - Download a pre-built binary from the [GitHub Releases] page and place it on
   your `$PATH`.
 
-- Build it from source if you have the Go toolchain installed.
+- Build it from source if you have Rust installed.
 
     ```
-    go install github.com/abhinav/restack/cmd/restack@latest
+    cargo install restack
     ```
 
   [restack-bin package]: https://aur.archlinux.org/packages/restack-bin

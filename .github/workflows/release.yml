@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+  # Support running this manually without uploading to test out the workflow.
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - slug: linux-amd64
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - slug: linux-arm64
+            target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            linker: aarch64-linux-gnu-gcc
+            extra_toolchain: gcc-aarch64-linux-gnu
+            strip: aarch64-linux-gnu-strip
+          - slug: linux-armv7
+            target: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            linker: arm-linux-gnueabihf-gcc
+            extra_toolchain: gcc-arm-linux-gnueabihf
+            strip: arm-linux-gnueabihf-strip
+
+          # macOS
+          - slug: darwin-amd64
+            target: x86_64-apple-darwin
+            os: macos-latest
+          - slug: darwin-arm64
+            target: aarch64-apple-darwin
+            os: macos-latest
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        target: ${{ matrix.target }}
+        profile: minimal
+
+    - name: Install additional toolchains
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_toolchain != '' }}
+      run: |
+        set -x
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.extra_toolchain }}
+
+        mkdir -p .cargo
+        cat > .cargo/config <<EOF
+        [target.${{ matrix.target }}]
+        linker = "${{ matrix.linker }}"
+        EOF
+
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --target ${{ matrix.target }} --release
+
+    - name: Strip binary
+      run: |
+        set -x
+        strip=${{ matrix.strip || 'strip' }}
+        exe=target/${{ matrix.target }}/release/restack
+        echo "Before: $(wc -c < "$exe") bytes"
+        "$strip" target/${{ matrix.target }}/release/restack
+        echo "After: $(wc -c < "$exe") bytes"
+
+    - name: Prepare archive
+      run: |
+        tar -cvzf restack-${{ matrix.slug }}.tar.gz \
+             -C target/${{ matrix.target }}/release \
+             restack
+
+    - name: Upload archive
+      uses: actions/upload-artifact@v3
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      with:
+        name: restack-archive
+        path: restack-*.tar.gz
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+
+    - name: Download archives
+      uses: actions/download-artifact@v3
+      with:
+        name: restack-archive
+
+    - name: Publish Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: 'restack-*.tar.gz'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Publish Homebrew tap
+      uses: Justintime50/homebrew-releaser@v1
+      with:
+        homebrew_owner: abhinav
+        homebrew_tap: homebrew-tap
+        formula_folder: .
+        github_token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        install: 'bin.install restack'
+        test: '#{bin/restack --version'
+
+        target_darwin_amd64: true
+        target_darwin_arm64: true
+        target_linux_amd64: true
+        target_linux_arm64: true
+
+    # env:
+    #   AUR_KEY: ${{ secrets.AUR_KEY }}

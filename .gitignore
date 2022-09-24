@@ -1,6 +1,3 @@
-vendor
-/.tmp
-/bin
-/dist
-/changes.*.txt
-/cover.*
+/target
+/*.profraw
+/lcov.info
