@@ -3,6 +3,10 @@ name = "restack"
 version = "0.6.0"
 edition = "2021"
 description = "Teaches git rebase --interactive about your branches."
+homepage = "https://github.com/abhinav/restack"
+documentation = "https://github.com/abhinav/restack/blob/main/README.md"
+repository = "https://github.com/abhinav/restack"
+license = "MIT"
 
 [[bin]]
 name = "restack"

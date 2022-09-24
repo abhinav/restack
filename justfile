@@ -7,17 +7,17 @@ _build_flags := if _release == "1" { "--release" } else { "" }
 
 # build the binary
 build:
-	cargo build {{_build_flags}}
+	cargo build --locked {{_build_flags}}
 
 # run all tests
 test *args:
-	cargo nextest run --workspace --no-fail-fast {{args}}
+	cargo nextest run --locked --workspace --no-fail-fast {{args}}
 
 _llvm_cov_report_flags := "--hide-instantiations"
 
 # generate a coverage report
 cover:
-	cargo llvm-cov nextest --workspace --lcov --output-path lcov.info --no-fail-fast
+	cargo llvm-cov nextest --workspace --locked --lcov --output-path lcov.info --no-fail-fast
 	cargo llvm-cov report {{_llvm_cov_report_flags}}
 
 # generate an HTML coverage report
