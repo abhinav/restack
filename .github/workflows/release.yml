@@ -105,12 +105,23 @@ jobs:
       with:
         name: restack-archive
 
+    - name: Install parse-changelog
+      uses: taiki-e/install-action@v1
+      with:
+        tool: parse-changelog@0.5.1
+
+    - name: Extract changelog
+      run: |
+        REF=${{ github.ref }}
+        VERSION=${REF#refs/tags/v}
+        parse-changelog CHANGELOG.md "$VERSION" > ${{ github.workspace }}-CHANGELOG.txt
+
     - name: Publish Release
       uses: softprops/action-gh-release@v1
       with:
         files: 'restack-*.tar.gz'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        body_path: ${{ github.workspace }}-CHANGELOG.txt
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish Homebrew tap
       uses: Justintime50/homebrew-releaser@v1
