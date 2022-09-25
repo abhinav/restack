@@ -132,20 +132,19 @@ jobs:
         body_path: ${{ github.workspace }}-CHANGELOG.txt
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Publish Homebrew tap
-      uses: Justintime50/homebrew-releaser@v1
-      with:
-        homebrew_owner: abhinav
-        homebrew_tap: homebrew-tap
-        formula_folder: .
-        github_token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
-        install: 'bin.install restack'
-        test: '#{bin/restack --version'
-
-        target_darwin_amd64: true
-        target_darwin_arm64: true
-        target_linux_amd64: true
-        target_linux_arm64: true
+    # - name: Publish Homebrew tap
+    #   uses: Justintime50/homebrew-releaser@v1
+    #   with:
+    #     homebrew_owner: abhinav
+    #     homebrew_tap: homebrew-tap
+    #     formula_folder: .
+    #     github_token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+    #     install: 'bin.install restack'
+    #     test: '#{bin/restack --version'
+    #     target_darwin_amd64: true
+    #     target_darwin_arm64: true
+    #     target_linux_amd64: true
+    #     target_linux_arm64: true
 
     # env:
     #   AUR_KEY: ${{ secrets.AUR_KEY }}
