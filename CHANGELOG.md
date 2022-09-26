@@ -1,6 +1,6 @@
 # Releases
 
-## v0.6.0 (unreleased)
+## v0.6.0 (2022-09-24)
 
 - Reduce binary size significantly.
 
