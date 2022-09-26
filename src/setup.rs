@@ -1,10 +1,10 @@
 //! Implements the `restack setup` command.
 
-use std::fs;
 use std::io::{self, Write};
 use std::os::unix::fs::OpenOptionsExt;
+use std::{env, fs, path};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 
 use crate::git::{self, Git};
 
@@ -69,7 +69,8 @@ pub fn run(mut parser: lexopt::Parser) -> Result<()> {
             .context("Could nto print edit script");
     }
 
-    let home = dirs::home_dir().ok_or_else(|| anyhow!("Home directory not found"))?;
+    let home =
+        path::PathBuf::from(env::var("HOME").context("Could not determine $HOME is not defined")?);
 
     let edit_path = {
         // TODO: Consider using xdg-home instead.
