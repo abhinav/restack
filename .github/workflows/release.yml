@@ -17,20 +17,25 @@ jobs:
         include:
           # Linux
           - slug: linux-amd64
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             os: ubuntu-latest
+            extra_pkgs: musl-tools
+
           - slug: linux-arm64
-            target: aarch64-unknown-linux-gnu
+            target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            linker: aarch64-linux-gnu-gcc
-            extra_toolchain: gcc-aarch64-linux-gnu
-            strip: aarch64-linux-gnu-strip
+            linker: aarch64-linux-musl-gcc
+            musl-cross: aarch64-linux-musl-cross
+            strip: aarch64-linux-musl-strip
+            no-build-std: true
+
           - slug: linux-armv7
-            target: armv7-unknown-linux-gnueabihf
+            target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            linker: arm-linux-gnueabihf-gcc
-            extra_toolchain: gcc-arm-linux-gnueabihf
-            strip: arm-linux-gnueabihf-strip
+            linker: armv7l-linux-musleabihf-gcc
+            musl-cross: armv7l-linux-musleabihf-cross
+            strip: armv7l-linux-musleabihf-strip
+            no-build-std: true
 
           # macOS
           - slug: darwin-amd64
@@ -52,23 +57,34 @@ jobs:
         profile: minimal
         components: rust-src
 
-    - name: Install additional toolchains
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_toolchain != '' }}
-      run: |
-        set -x
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.extra_toolchain }}
+    - uses: Swatinem/rust-cache@v2
 
+    - name: Install extra packages
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_pkgs != '' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.extra_pkgs }}
+
+    - name: Install musl cross-compilation toolchain
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.musl-cross != '' }}
+      run: |
+        mkdir -p "$HOME/.local"
+        curl -o /tmp/musl.tgz https://musl.cc/${{ matrix.musl-cross }}.tgz
+        tar -xzf /tmp/musl.tgz -C $HOME/.local
+        echo "$HOME/.local/${{ matrix.musl-cross }}/bin" >> $GITHUB_PATH
+
+    - name: Configure linker
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.linker != '' }}
+      run: |
         mkdir -p .cargo
         cat > .cargo/config <<EOF
         [target.${{ matrix.target }}]
         linker = "${{ matrix.linker }}"
         EOF
 
-    - uses: Swatinem/rust-cache@v2
-
-    - name: Build
+    - name: Build (build-std)
       uses: actions-rs/cargo@v1
+      if: ${{ !matrix.no-build-std }}
       with:
         command: build
         args: >-
@@ -78,9 +94,18 @@ jobs:
           -Z build-std=std,panic_abort
           -Z build-std-features=panic_immediate_abort
 
+    - name: Build (no-build-std)
+      uses: actions-rs/cargo@v1
+      if: ${{ matrix.no-build-std }}
+      with:
+        command: build
+        args: >-
+          --target ${{ matrix.target }}
+          --locked
+          --release
+
     - name: Strip binary
       run: |
-        set -x
         strip=${{ matrix.strip || 'strip' }}
         exe=target/${{ matrix.target }}/release/restack
         echo "Before: $(wc -c < "$exe") bytes"
