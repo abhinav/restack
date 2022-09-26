@@ -1,5 +1,9 @@
 # Releases
 
+## Unreleased
+### Fixed
+- Linux binaries should be statically linked.
+
 ## v0.6.0 (2022-09-24)
 
 - Reduce binary size significantly.
