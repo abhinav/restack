@@ -1,4 +1,4 @@
-# 📚 restack [![CI](https://github.com/abhinav/restack/actions/workflows/build.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/build.yml) [![Crate](https://img.shields.io/crates/v/restack.svg)](https://crates.io/crates/restack)
+# 📚 restack [![CI](https://github.com/abhinav/restack/actions/workflows/build.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/build.yml) [![Crate](https://img.shields.io/crates/v/restack.svg)](https://crates.io/crates/restack) [![codecov](https://codecov.io/gh/abhinav/restack/branch/main/graph/badge.svg)](https://codecov.io/gh/abhinav/restack/tree/main)
 
 restack augments the experience of performing an interactive Git rebase to make
 it more friendly to workflows that involve lots of interdependent branches.
