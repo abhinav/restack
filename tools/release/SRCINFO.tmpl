@@ -1,0 +1,19 @@
+pkgbase = restack-bin
+	pkgdesc = Makes interactive Git rebase nicer.
+	pkgver = ${VERSION}
+	pkgrel = 1
+	url = https://github.com/abhinav/restack
+	arch = aarch64
+	arch = armv7h
+	arch = x86_64
+	license = MIT
+	provides = restack
+	conflicts = restack
+	source_aarch64 = restack-bin_${VERSION}_aarch64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-arm64.tar.gz
+	sha256sums_aarch64 = $SHASUM_linux_arm64
+	source_armv7h = restack-bin_${VERSION}_armv7h.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-armv7.tar.gz
+	sha256sums_armv7h = $SHASUM_linux_armv7
+	source_x86_64 = restack-bin_${VERSION}_x86_64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-amd64.tar.gz
+	sha256sums_x86_64 = $SHASUM_linux_amd64
+
+pkgname = restack-bin

@@ -1,0 +1,61 @@
+# typed: false
+# frozen_string_literal: true
+
+class Restack < Formula
+  desc "Makes interactive Git rebase aware of your branches."
+  homepage "https://github.com/abhinav/restack"
+  version "${VERSION}"
+  license "MIT"
+
+  depends_on "git"
+
+  on_macos do
+    if Hardware::CPU.intel?
+      url "https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-darwin-amd64.tar.gz"
+      sha256 "$SHASUM_darwin_amd64"
+
+      def install
+        bin.install "restack"
+      end
+    end
+    if Hardware::CPU.arm?
+      url "https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-darwin-arm64.tar.gz"
+      sha256 "$SHASUM_darwin_arm64"
+
+      def install
+        bin.install "restack"
+      end
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
+      url "https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-arm64.tar.gz"
+      sha256 "$SHASUM_linux_arm64"
+
+      def install
+        bin.install "restack"
+      end
+    end
+    if Hardware::CPU.intel?
+      url "https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-amd64.tar.gz"
+      sha256 "$SHASUM_linux_amd64"
+
+      def install
+        bin.install "restack"
+      end
+    end
+    if Hardware::CPU.arm? && !Hardware::CPU.is_64_bit?
+      url "https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-armv7.tar.gz"
+      sha256 "$SHASUM_linux_armv7"
+
+      def install
+        bin.install "restack"
+      end
+    end
+  end
+
+  test do
+    system "#{bin}/restack -version"
+  end
+end

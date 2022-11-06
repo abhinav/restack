@@ -137,36 +137,66 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Checkout Homebrew tap
+      uses: actions/checkout@v3
+      with:
+        repository: abhinav/homebrew-tap
+        token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        path: homebrew-tap
+
+    - name: Checkout AUR
+      run: tools/release/checkout-aur.sh
+      env:
+        AUR_KEY: ${{ secrets.AUR_KEY }}
+        AUR_REPO: "ssh://aur@aur.archlinux.org/restack-bin.git"
+        AUR_DIR: aur-restack-bin
+
     - name: Download archives
       uses: actions/download-artifact@v3
       with:
         name: restack-archive
+
+    - name: Determine version number (push)
+      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      run: |
+        echo "VERSION=${REF#refs/tags/v}" >> $GITHUB_ENV
+      env:
+        REF: ${{ github.ref }}
+
+    - name: Determine version number (workflow_dispatch)
+      if:  github.event_name == 'workflow_dispatch'
+      run: |
+        echo "VERSION=${INPUT_VERSION#v}" >> $GITHUB_ENV
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+
+    - name: Generate package specs
+      run: |
+        tools/release/genpkgspec.sh ${{ env.VERSION }} restack-*.tar.gz
+
+        echo ::group::Homebrew Formula
+        cat target/formula/restack.rb
+        echo ::endgroup::
+
+        echo ::group::restack-bin/PKGBUILD
+        cat target/aur-bin/PKGBUILD
+        echo ::endgroup::
+
+        echo ::group::restack-bin/.SRCINFO
+        cat target/aur-bin/.SRCINFO
+        echo ::endgroup::
 
     - name: Install parse-changelog
       uses: taiki-e/install-action@v1
       with:
         tool: parse-changelog@0.5.1
 
-    - name: Extract changelog (tag push)
-      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    - name: Extract changelog
       run: |
-        REF=${{ github.ref }}
-        VERSION=${REF#refs/tags/v}
-        parse-changelog CHANGELOG.md "$VERSION" > ${{ github.workspace }}-CHANGELOG.txt
+        parse-changelog CHANGELOG.md ${{ env.VERSION }} > ${{ github.workspace }}-CHANGELOG.txt
         echo ::group::CHANGELOG
         cat ${{ github.workspace }}-CHANGELOG.txt
         echo ::endgroup::
-
-    - name: Extract changelog (workflow_dispatch)
-      if:  github.event_name == 'workflow_dispatch'
-      run: |
-        VERSION=${INPUT_VERSION#v}
-        parse-changelog CHANGELOG.md "$VERSION" > ${{ github.workspace }}-CHANGELOG.txt
-        echo ::group::CHANGELOG
-        cat ${{ github.workspace }}-CHANGELOG.txt
-        echo ::endgroup::
-      env:
-        INPUT_VERSION: ${{ inputs.version }}
 
     - name: Publish Release
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -176,19 +206,20 @@ jobs:
         body_path: ${{ github.workspace }}-CHANGELOG.txt
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    # - name: Publish Homebrew tap
-    #   uses: Justintime50/homebrew-releaser@v1
-    #   with:
-    #     homebrew_owner: abhinav
-    #     homebrew_tap: homebrew-tap
-    #     formula_folder: .
-    #     github_token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
-    #     install: 'bin.install restack'
-    #     test: '#{bin/restack --version'
-    #     target_darwin_amd64: true
-    #     target_darwin_arm64: true
-    #     target_linux_amd64: true
-    #     target_linux_arm64: true
+    - name: Publish Homebrew tap
+      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      working-directory: homebrew-tap
+      run: |
+        cp ../target/formula/restack.rb .
+        git add restack.rb
+        git commit -m "restack ${{ env.VERSION }}"
+        git push
 
-    # env:
-    #   AUR_KEY: ${{ secrets.AUR_KEY }}
+    - name: Publish AUR package
+      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      working-directory: aur-restack-bin
+      run: |
+        cp ../target/aur-bin/{PKGBUILD,.SRCINFO} .
+        git add {PKGBUILD,.SRCINFO}
+        git commit -m "restack ${{ env.VERSION }}"
+        git push
