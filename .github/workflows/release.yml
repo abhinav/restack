@@ -6,6 +6,11 @@ on:
 
   # Support running this manually without uploading to test out the workflow.
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version we're pretending to release, e.g. 0.6.0"
+        required: true
+        type: string
 
 jobs:
 
@@ -120,7 +125,6 @@ jobs:
 
     - name: Upload archive
       uses: actions/upload-artifact@v3
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       with:
         name: restack-archive
         path: restack-*.tar.gz
@@ -128,7 +132,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
 
     - name: Checkout code
@@ -144,13 +147,29 @@ jobs:
       with:
         tool: parse-changelog@0.5.1
 
-    - name: Extract changelog
+    - name: Extract changelog (tag push)
+      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
         REF=${{ github.ref }}
         VERSION=${REF#refs/tags/v}
         parse-changelog CHANGELOG.md "$VERSION" > ${{ github.workspace }}-CHANGELOG.txt
+        echo ::group::CHANGELOG
+        cat ${{ github.workspace }}-CHANGELOG.txt
+        echo ::endgroup::
+
+    - name: Extract changelog (workflow_dispatch)
+      if:  github.event_name == 'workflow_dispatch'
+      run: |
+        VERSION=${INPUT_VERSION#v}
+        parse-changelog CHANGELOG.md "$VERSION" > ${{ github.workspace }}-CHANGELOG.txt
+        echo ::group::CHANGELOG
+        cat ${{ github.workspace }}-CHANGELOG.txt
+        echo ::endgroup::
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
 
     - name: Publish Release
+      if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v1
       with:
         files: 'restack-*.tar.gz'
