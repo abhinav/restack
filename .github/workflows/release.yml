@@ -144,13 +144,6 @@ jobs:
         token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
         path: homebrew-tap
 
-    - name: Checkout AUR
-      run: tools/release/checkout-aur.sh
-      env:
-        AUR_KEY: ${{ secrets.AUR_KEY }}
-        AUR_REPO: "ssh://aur@aur.archlinux.org/restack-bin.git"
-        AUR_DIR: aur-restack-bin
-
     - name: Download archives
       uses: actions/download-artifact@v3
       with:
@@ -180,10 +173,6 @@ jobs:
 
         echo ::group::restack-bin/PKGBUILD
         cat target/aur-bin/PKGBUILD
-        echo ::endgroup::
-
-        echo ::group::restack-bin/.SRCINFO
-        cat target/aur-bin/.SRCINFO
         echo ::endgroup::
 
     - name: Install parse-changelog
@@ -216,10 +205,13 @@ jobs:
         git push
 
     - name: Publish AUR package
+      uses: KSXGitHub/github-actions-deploy-aur@v2.5.0
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      working-directory: aur-restack-bin
-      run: |
-        cp ../target/aur-bin/{PKGBUILD,.SRCINFO} .
-        git add {PKGBUILD,.SRCINFO}
-        git commit -m "restack ${{ env.VERSION }}"
-        git push
+      with:
+        pkgname: restack-bin
+        pkgbuild: ./target/aur-bin/PKGBUILD
+        commit_username: ${{ secrets.AUR_USERNAME }}
+        commit_email: ${{ secrets.AUR_EMAIL }}
+        ssh_private_key: ${{ secrets.AUR_KEY }}
+        commit_message: restack ${{ env.VERSION }}
+        allow_empty_commits: false

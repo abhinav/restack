@@ -10,7 +10,6 @@ IFS=$'\n\t'
 DIR=$(dirname "$0")
 BOTTLE_TMPL="$DIR/bottle.tmpl"
 PKGBUILD_TMPL="$DIR/PKGBUILD.tmpl"
-SRCINFO_TMPL="$DIR/SRCINFO.tmpl"
 
 err() {
 	echo >&2 "$@"
@@ -56,4 +55,3 @@ envsubst "$shellformat" < "$BOTTLE_TMPL" > target/formula/restack.rb
 
 mkdir -p target/aur-bin
 envsubst "$shellformat" < "$PKGBUILD_TMPL" > target/aur-bin/PKGBUILD
-envsubst "$shellformat" < "$SRCINFO_TMPL" > target/aur-bin/.SRCINFO
