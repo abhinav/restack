@@ -1,24 +1,36 @@
 # Maintainer: Abhinav Gupta <mail@abhinavg.net>
 
-pkgname='restack-bin'
+pkgname=restack
 pkgver=${VERSION}
 pkgrel=1
-pkgdesc='Makes interactive Git rebase nicer.'
-url='https://github.com/abhinav/restack'
-arch=('aarch64' 'armv7h' 'x86_64')
+pkgdesc='Makes interactive Git rebase aware of intermediate branches.'
+arch=(any)
+url="https://github.com/abhinav/restack"
 license=('MIT')
-provides=('restack')
-conflicts=('restack')
+makedepends=('cargo-nightly')
+source=("$pkgname-$pkgver.tar.gz::https://static.crates.io/crates/$pkgname/$pkgname-$pkgver.crate")
+sha256sums=('a6e6381a632104cb2d1a2e2104a98fdab40c23e9f222bdff53641b7bfb3d8513')
 
-source_aarch64=("${pkgname}_${pkgver}_aarch64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-arm64.tar.gz")
-sha256sums_aarch64=('$SHASUM_linux_arm64')
+prepare() {
+	( cd "$pkgname-$pkgver" &&
+		cargo fetch --locked --target "$CARCH-unknown-linux-gnu" )
+}
 
-source_armv7h=("${pkgname}_${pkgver}_armv7h.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-armv7.tar.gz")
-sha256sums_armv7h=('$SHASUM_linux_armv7')
+build() {
+	export RUSTUP_TOOLCHAIN=nightly-2022-09-21
+	export CARGO_TARGET_DIR=target
+	( cd "$pkgname-$pkgver" &&
+		cargo build --frozen --release \
+		--target "$CARCH-unknown-linux-gnu" \
+		-Z build-std=std,panic_abort \
+		-Z build-std-features=panic_immediate_abort &&
+		strip "target/$CARCH-unknown-linux-gnu/release/restack" )
+}
 
-source_x86_64=("${pkgname}_${pkgver}_x86_64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-amd64.tar.gz")
-sha256sums_x86_64=('$SHASUM_linux_amd64')
+check() {
+	"$pkgname-$pkgver/target/$CARCH-unknown-linux-gnu/release/restack" --version
+}
 
 package() {
-  install -Dm755 "./restack" "${pkgdir}/usr/bin/restack"
+	install -Dm0755 -t "$pkgdir/usr/bin/$pkgname" "$pkgname-$pkgver/target/$CARCH-unknown-linux-gnu/release/restack"
 }

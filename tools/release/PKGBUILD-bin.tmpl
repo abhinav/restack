@@ -1,0 +1,24 @@
+# Maintainer: Abhinav Gupta <mail@abhinavg.net>
+
+pkgname='restack-bin'
+pkgver=${VERSION}
+pkgrel=1
+pkgdesc='Makes interactive Git rebase aware of intermediate branches.'
+url='https://github.com/abhinav/restack'
+arch=('aarch64' 'armv7h' 'x86_64')
+license=('MIT')
+provides=('restack')
+conflicts=('restack')
+
+source_aarch64=("${pkgname}_${pkgver}_aarch64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-arm64.tar.gz")
+sha256sums_aarch64=('$SHASUM_linux_arm64')
+
+source_armv7h=("${pkgname}_${pkgver}_armv7h.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-armv7.tar.gz")
+sha256sums_armv7h=('$SHASUM_linux_armv7')
+
+source_x86_64=("${pkgname}_${pkgver}_x86_64.tar.gz::https://github.com/abhinav/restack/releases/download/v${VERSION}/restack-linux-amd64.tar.gz")
+sha256sums_x86_64=('$SHASUM_linux_amd64')
+
+package() {
+  install -Dm755 "./restack" "${pkgdir}/usr/bin/restack"
+}
