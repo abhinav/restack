@@ -1,6 +1,6 @@
 # Releases
 
-## Unreleased
+## v0.6.1 (2022-11-07)
 ### Fixed
 - Linux binaries should be statically linked.
 
