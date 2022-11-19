@@ -17,7 +17,7 @@ prepare() {
 }
 
 build() {
-	export RUSTUP_TOOLCHAIN=nightly-2022-09-21
+	export RUSTUP_TOOLCHAIN=nightly-2022-11-18
 	export CARGO_TARGET_DIR=target
 	( cd "$pkgname-$pkgver" &&
 		cargo build --frozen --release \
