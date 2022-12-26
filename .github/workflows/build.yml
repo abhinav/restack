@@ -28,7 +28,7 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Install testing tools
-      uses: taiki-e/install-action@v1
+      uses: taiki-e/install-action@v2
       with:
         tool: nextest@0.9.36,cargo-llvm-cov@0.5.0
 
