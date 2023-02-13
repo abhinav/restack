@@ -109,9 +109,9 @@ dependencies = [
 
 [[package]]
 name = "file-lock"
-version = "2.1.8"
+version = "2.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a585d1687856110a72028f31446c823f7c62e216e07434a64d1ebf1391fc99f8"
+checksum = "f59be9010c5418713a48aac4c1b897d85dafd958055683dc31bdae553536647b"
 dependencies = [
  "cc",
  "libc",
