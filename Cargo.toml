@@ -17,7 +17,7 @@ test = true
 [dependencies]
 anyhow = "1.0"
 lexopt = "0.3.0"
-tempfile = "3.3.0"
+tempfile = "3.4.0"
 
 [dev-dependencies]
 duct = "0.13.6"
