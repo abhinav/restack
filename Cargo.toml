@@ -6,7 +6,7 @@ description = "Teaches git rebase --interactive about your branches."
 homepage = "https://github.com/abhinav/restack"
 documentation = "https://github.com/abhinav/restack/blob/main/README.md"
 repository = "https://github.com/abhinav/restack"
-license = "MIT"
+license = "GPL-2.0"
 
 [[bin]]
 name = "restack"
