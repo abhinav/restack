@@ -58,7 +58,7 @@ fn main() -> Result<()> {
         lexopt::Arg::Short('V') | lexopt::Arg::Long("version") => {
             println!("restack {}", env!("CARGO_PKG_VERSION"));
             println!("Copyright (C) 2023 Abhinav Gupta");
-            println!("  <https://github.com/abhinav/restack");
+            println!("  <https://github.com/abhinav/restack>");
             println!("restack comes with ABSOLUTELY NO WARRANTY.");
             println!("This is free software, and you are welcome to redistribute it");
             println!("under certain conditions. See source for details.");
