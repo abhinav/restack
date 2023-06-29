@@ -26,10 +26,11 @@ where
 }
 
 #[rstest]
-#[case::editor_flag(true)]
-#[case::editor_env(false)]
-fn simple_stack(#[case] editor_flag: bool) -> Result<()> {
-    let repo_fixture = open_fixture("simple_stack.sh")?;
+#[case::editor_flag(true, "simple_stack.sh")]
+#[case::editor_env(false, "simple_stack.sh")]
+#[case::comment_char(false, "simple_stack_comment_char.sh")]
+fn simple_stack(#[case] editor_flag: bool, #[case] fixture: &str) -> Result<()> {
+    let repo_fixture = open_fixture(fixture)?;
 
     let editor = FIXTURES_DIR.join("bin/add_break.sh");
 

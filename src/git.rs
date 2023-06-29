@@ -39,6 +39,9 @@ pub trait Git {
         let git_dir = self.git_dir(dir).context("Failed to find .git directory")?;
         rebase_head_name(&git_dir)
     }
+
+    /// Reports the character used for comments in the repository at the given path.
+    fn comment_char(&self, dir: &path::Path) -> Result<char>;
 }
 
 const REBASE_STATE_DIRS: &[&str] = &["rebase-apply", "rebase-merge"];

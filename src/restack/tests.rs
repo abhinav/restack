@@ -12,6 +12,7 @@ use crate::git;
 struct StubGit {
     branches: Vec<git::Branch>,
     rebase_head_name: String,
+    comment_char: Option<char>,
 }
 
 impl git::Git for StubGit {
@@ -34,6 +35,10 @@ impl git::Git for StubGit {
     fn rebase_head_name(&self, _: &path::Path) -> Result<String> {
         Ok(self.rebase_head_name.clone())
     }
+
+    fn comment_char(&self, _: &path::Path) -> Result<char> {
+        Ok(self.comment_char.unwrap_or('#'))
+    }
 }
 
 struct TestBranch<'a> {
@@ -45,6 +50,7 @@ struct TestCase<'a> {
     remote_name: Option<&'a str>,
     rebase_head_name: &'a str,
     branches: &'a [TestBranch<'a>],
+    comment_char: Option<char>,
     give: &'a str,
     want: &'a str,
 }
@@ -62,6 +68,7 @@ fn restack_test(test: &TestCase) -> Result<()> {
     let stub_git = StubGit {
         branches,
         rebase_head_name: test.rebase_head_name.to_owned(),
+        comment_char: test.comment_char,
     };
 
     let cfg = Config::new(tempdir.path(), stub_git);
@@ -96,6 +103,7 @@ testcase!(
     TestCase {
         remote_name: Some("origin"),
         rebase_head_name: "feature",
+        comment_char: None,
         branches: &[branch("feature", "hash1")],
         give: indoc! {"
             pick hash0 Do something
@@ -115,6 +123,7 @@ testcase!(
     TestCase {
         remote_name: None,
         rebase_head_name: "foo",
+        comment_char: None,
         branches: &[],
         give: indoc! {"
             pick
@@ -130,6 +139,7 @@ testcase!(
     TestCase {
         remote_name: Some("origin"),
         rebase_head_name: "feature/wip",
+        comment_char: None,
         branches: &[branch("feature/1", "hash1"), branch("feature/wip", "hash1"),],
         give: indoc! {"
             pick hash0 Do something
@@ -156,10 +166,42 @@ testcase!(
 );
 
 testcase!(
+    comment_char_set,
+    TestCase {
+        remote_name: Some("origin"),
+        rebase_head_name: "feature/wip",
+        comment_char: Some(';'),
+        branches: &[branch("feature/1", "hash1"), branch("feature/wip", "hash1"),],
+        give: indoc! {"
+            pick hash0 Do something
+            exec make test
+            pick hash1 Implement feature
+            exec make test
+
+            ; Rebase instructions
+        "},
+        want: indoc! {"
+            pick hash0 Do something
+            exec make test
+            pick hash1 Implement feature
+            exec git branch -f feature/1
+
+            exec make test
+
+            ; Uncomment this section to push the changes.
+            ; exec git push -f origin feature/1
+
+            ; Rebase instructions
+        "},
+    }
+);
+
+testcase!(
     rebase_instructions_comment_missing,
     TestCase {
         remote_name: Some("origin"),
         rebase_head_name: "feature/wip",
+        comment_char: None,
         branches: &[
             branch("feature/1", "hash1"),
             branch("feature/2", "hash3"),
@@ -209,6 +251,7 @@ testcase!(
     TestCase {
         remote_name: None,
         rebase_head_name: "b",
+        comment_char: None,
         branches: &[branch("a", "hash1"), branch("b", "hash3")],
         give: indoc! {"
             pick hash0 do thing
@@ -232,6 +275,7 @@ testcase!(
     TestCase {
         remote_name: None,
         rebase_head_name: "b",
+        comment_char: None,
         branches: &[branch("a", "hash1"), branch("b", "hash3")],
         give: indoc! {"
             pick hash0 do thing
@@ -255,6 +299,7 @@ testcase!(
     TestCase {
         remote_name: Some("origin"),
         rebase_head_name: "stack",
+        comment_char: None,
         branches: &[
             branch("5601-connection-refused", "29b83a30c"),
             branch("5460-publish-bundle", "ae23c4203"),
@@ -320,6 +365,7 @@ testcase!(
     TestCase {
         remote_name: Some("origin"),
         rebase_head_name: "feature/wip",
+        comment_char: None,
         branches: &[branch("feature/1", "hash1"), branch("feature/2", "hash2")],
         give: indoc! {"
             pick hash1 Implement feature 1
