@@ -91,7 +91,7 @@ pub fn run(mut parser: lexopt::Parser) -> Result<()> {
 
     let git_shell = git::Shell::new();
     git_shell
-        .set_global_config_str("sequence.editor", &edit_path)
+        .set_global_config_str("sequence.editor", edit_path)
         .context("Could not update sequence.editor")?;
 
     eprintln!("restack has been successfully set up");
