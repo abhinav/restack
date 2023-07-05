@@ -231,7 +231,7 @@ jobs:
     - name: Release Cargo crate
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
-        crate login ${{ secrets.CARGO_TOKEN }}
+        cargo login ${{ secrets.CARGO_TOKEN }}
         echo ::group::Publishing files
         cargo packge --list
         echo ::endgroup::
