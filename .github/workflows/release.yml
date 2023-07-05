@@ -75,8 +75,8 @@ jobs:
       run: |
         mkdir -p "$HOME/.local"
         curl -o /tmp/musl.tgz https://musl.cc/${{ matrix.musl-cross }}.tgz
-        tar -xzf /tmp/musl.tgz -C $HOME/.local
-        echo "$HOME/.local/${{ matrix.musl-cross }}/bin" >> $GITHUB_PATH
+        tar -xzf /tmp/musl.tgz -C "$HOME/.local"
+        echo "$HOME/.local/${{ matrix.musl-cross }}/bin" >> "$GITHUB_PATH"
 
     - name: Configure linker
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.linker != '' }}
@@ -163,14 +163,14 @@ jobs:
     - name: Determine version number (push)
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
-        echo "VERSION=${REF#refs/tags/v}" >> $GITHUB_ENV
+        echo "VERSION=${REF#refs/tags/v}" >> "$GITHUB_ENV"
       env:
         REF: ${{ github.ref }}
 
     - name: Determine version number (workflow_dispatch)
       if:  github.event_name == 'workflow_dispatch'
       run: |
-        echo "VERSION=${INPUT_VERSION#v}" >> $GITHUB_ENV
+        echo "VERSION=${INPUT_VERSION#v}" >> "$GITHUB_ENV"
       env:
         INPUT_VERSION: ${{ inputs.version }}
 
