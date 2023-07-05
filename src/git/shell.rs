@@ -1,7 +1,5 @@
 //! Implements the Git trait by shelling out to git.
 
-#[cfg(test)]
-use std::collections::HashMap;
 use std::io::{self, BufRead};
 use std::{ffi, path, process};
 
@@ -10,43 +8,18 @@ use anyhow::{Context, Result};
 use super::{Branch, Git};
 
 /// Shell provides access to the git CLI.
-pub struct Shell {
-    /// envs is only available during tests and provides environment variable
-    /// overrides.
-    #[cfg(test)]
-    envs: HashMap<ffi::OsString, ffi::OsString>,
-}
+pub struct Shell {}
 
 impl Shell {
     /// Builds a new Shell, searching `$PATH` for a git executable.
     pub fn new() -> Self {
-        Self {
-            #[cfg(test)]
-            envs: HashMap::new(),
-        }
-    }
-
-    /// Adds an environment variable to be set for git invocations.
-    #[cfg(test)]
-    pub fn env<K, V>(&mut self, k: K, v: V) -> &mut Self
-    where
-        K: AsRef<ffi::OsStr>,
-        V: AsRef<ffi::OsStr>,
-    {
-        self.envs
-            .insert(k.as_ref().to_os_string(), v.as_ref().to_os_string());
-        self
+        Self {}
     }
 
     /// Builds a `process::Command` for internal use.
     fn cmd(&self) -> process::Command {
         let mut cmd = process::Command::new("git");
         cmd.stderr(process::Stdio::inherit());
-
-        #[cfg(test)]
-        {
-            cmd.envs(&self.envs);
-        }
 
         cmd
     }
@@ -99,8 +72,8 @@ impl Git for Shell {
 
         let mut branches: Vec<Branch> = Vec::new();
         let Some(stdout) = child.stdout.take() else {
-                unreachable!("Stdio::piped() always sets child.stdout");
-            };
+            unreachable!("Stdio::piped() always sets child.stdout");
+        };
         {
             let rdr = io::BufReader::new(stdout);
             for line in rdr.lines() {
@@ -111,8 +84,12 @@ impl Git for Shell {
                 //   $hash2 refs/heads/$name2
 
                 let Some(hash) = parts.next() else { continue };
-                let Some(refname) = parts.next() else { continue };
-                let Some(name) = refname.strip_prefix("refs/heads/") else { continue };
+                let Some(refname) = parts.next() else {
+                    continue;
+                };
+                let Some(name) = refname.strip_prefix("refs/heads/") else {
+                    continue;
+                };
 
                 branches.push(Branch {
                     name: name.to_string(),
@@ -172,13 +149,18 @@ mod tests {
         let homedir = tempfile::tempdir()?;
         let home = homedir.path();
 
-        let mut shell = Shell::new();
-        shell.env("HOME", home);
+        // This is hacky but it's the only way to prevent
+        // any other environment variables from leaking
+        // into the Git subprocess
+        std::env::vars().for_each(|(k, _)| {
+            std::env::remove_var(k);
+        });
+        std::env::set_var("HOME", home);
 
+        let shell = Shell::new();
         shell.set_global_config_str("user.name", "Test User")?;
 
         let stdout = duct::cmd!("git", "config", "user.name")
-            .env("HOME", home)
             .dir(workdir.path())
             .read()?;
 
