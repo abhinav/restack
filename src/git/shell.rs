@@ -106,6 +106,39 @@ impl Git for Shell {
 
         Ok(branches)
     }
+
+    fn comment_char(&self, dir: &path::Path) -> Result<char> {
+        let out = self
+            .cmd()
+            // Looking up git config for a field that is unset
+            // will return a non-zero exit code
+            // if we don't specify a default value.
+            .args(["config", "--get", "--default=#", "core.commentChar"])
+            .current_dir(dir)
+            .output()
+            .context("Failed to run git config")?;
+        out.status.exit_ok().context("git config failed")?;
+
+        let output = std::str::from_utf8(out.stdout.trim_ascii_end())
+            .context("Output of git config is not valid UTF-8")?;
+
+        return match output {
+            // In auto, git will pick an unused character from a pre-defined list.
+            // This might be useful to support in the future.
+            "auto" => anyhow::bail!(
+                "core.commentChar=auto is not supported yet. \
+                 Please set core.commentChar to a single character \
+                 or disable restack by unsetting sequence.editor."
+            ),
+
+            // Unreachable but easy enough to handle.
+            "" => Ok('#'),
+
+            // Git will complain if the value is more than one character
+            // so we don't need to handle that case.
+            _ => Ok(output.chars().next().unwrap()),
+        };
+    }
 }
 
 #[cfg(test)]
@@ -231,6 +264,57 @@ mod tests {
 
         assert!(
             format!("{}", err).contains("git show-ref failed"),
+            "got error: {}",
+            err
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn comment_char_default() -> Result<()> {
+        let fixture = gitscript::open("simple_stack.sh")?;
+
+        let shell = Shell::new();
+        let comment_char = shell.comment_char(fixture.dir())?;
+        assert!(
+            comment_char == '#',
+            "unexpected comment char: '{}'",
+            comment_char
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn comment_char() -> Result<()> {
+        let fixture = gitscript::open("simple_stack_comment_char.sh")?;
+
+        let shell = Shell::new();
+        let comment_char = shell.comment_char(fixture.dir())?;
+        assert!(
+            comment_char == ';',
+            "unexpected comment char: '{}'",
+            comment_char
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn comment_char_auto() -> Result<()> {
+        let fixture = gitscript::open("empty_commit_comment_char_auto.sh")?;
+
+        let shell = Shell::new();
+
+        // Should return an error.
+        let err = match shell.comment_char(fixture.dir()) {
+            Ok(v) => panic!("expected an error, got {:?}", v),
+            Err(err) => err,
+        };
+
+        assert!(
+            format!("{}", err).contains("core.commentChar=auto"),
             "got error: {}",
             err
         );

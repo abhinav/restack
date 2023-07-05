@@ -46,6 +46,15 @@ where
         src: I,
         dst: O,
     ) -> Result<()> {
+        let comment_char = match self.git.comment_char(self.cwd) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("WARN: {}", e);
+                eprintln!("WARN: Falling back to `#` as comment character");
+                '#'
+            },
+        };
+
         let rebase_branch_name = self
             .git
             .rebase_head_name(self.cwd)
@@ -63,6 +72,7 @@ where
         let src = io::BufReader::new(src);
         let mut restack = Restack {
             remote_name,
+            comment_char,
             rebase_branch_name: &rebase_branch_name,
             dst: io::BufWriter::new(dst),
             known_branches: &known_branches,
@@ -90,6 +100,9 @@ struct Restack<'a, O: io::Write> {
 
     /// Name of the branch we're rebasing.
     rebase_branch_name: &'a str,
+
+    /// Character that starts a comment.
+    comment_char: char,
 
     /// Destination writer.
     dst: io::BufWriter<O>,
@@ -119,7 +132,7 @@ impl<'a, O: io::Write> Restack<'a, O> {
 
         // Comments usually mark the end of instructions.
         // Flush optional "git push" statements.
-        if line.get(0..1) == Some("#") {
+        if line.starts_with(self.comment_char) {
             self.update_previous_branches()?;
             self.write_push_section(false, true)
                 .context("Could not write 'git push' section")?;
@@ -141,7 +154,9 @@ impl<'a, O: io::Write> Restack<'a, O> {
         // Most lines go as-is.
         self.write_line(line)?;
 
-        let Some(cmd) = cmd else { return Ok(()); };
+        let Some(cmd) = cmd else {
+            return Ok(());
+        };
         let hash = match cmd {
             "p" | "pick" | "r" | "reword" | "e" | "edit" => match parts.next() {
                 Some(s) => s,
@@ -167,14 +182,24 @@ impl<'a, O: io::Write> Restack<'a, O> {
             return Ok(());
         }
 
-        let Some(remote_name) = self.remote_name else { return Ok(()); };
+        let Some(remote_name) = self.remote_name else {
+            return Ok(());
+        };
 
         if pad_before {
             writeln!(self.dst)?;
         }
-        writeln!(self.dst, "# Uncomment this section to push the changes.")?;
+        writeln!(
+            self.dst,
+            "{} Uncomment this section to push the changes.",
+            self.comment_char
+        )?;
         for br in &self.updated_branches {
-            writeln!(self.dst, "# exec git push -f {} {}", remote_name, br.name)?;
+            writeln!(
+                self.dst,
+                "{} exec git push -f {} {}",
+                self.comment_char, remote_name, br.name
+            )?;
         }
         if pad_after {
             writeln!(self.dst)?;
