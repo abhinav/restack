@@ -53,7 +53,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Rust
       uses: actions-rs/toolchain@v1
@@ -141,10 +141,10 @@ jobs:
         tool: parse-changelog@0.5.1
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout Homebrew tap
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: abhinav/homebrew-tap
         token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
