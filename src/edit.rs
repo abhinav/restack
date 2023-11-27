@@ -67,7 +67,9 @@ pub fn run(mut parser: lexopt::Parser) -> Result<()> {
             }
         }
 
-        let Some(file) = file else { bail!("Please provide a file name"); };
+        let Some(file) = file else {
+            bail!("Please provide a file name");
+        };
 
         Args { editor, file }
     };
