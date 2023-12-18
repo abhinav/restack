@@ -124,7 +124,7 @@ jobs:
              restack
 
     - name: Upload archive
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: restack-archive
         path: restack-*.tar.gz
