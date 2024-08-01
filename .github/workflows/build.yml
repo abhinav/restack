@@ -18,10 +18,16 @@ jobs:
         # Test fixtures live in LFS.
         lfs: true
 
+    - name: Determine toolchain
+      id: rust-toolchain
+      run: |
+        echo "value=$(cat rust-toolchain)" >> "$GITHUB_OUTPUT"
+
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@v1
       with:
         components: rustfmt, clippy, llvm-tools-preview
+        toolchain: ${{ steps.rust-toolchain.outputs.value }}
 
     - name: Setup Rust cache
       uses: Swatinem/rust-cache@v2
