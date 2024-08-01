@@ -80,6 +80,7 @@ pub fn run(mut parser: lexopt::Parser) -> Result<()> {
         path.push("edit.sh");
         fs::OpenOptions::new()
             .create(true)
+            .truncate(true)
             .write(true)
             .mode(0o755)
             .open(&path)

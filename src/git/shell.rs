@@ -107,22 +107,41 @@ impl Git for Shell {
         Ok(branches)
     }
 
-    fn comment_char(&self, dir: &path::Path) -> Result<char> {
+    fn comment_string(&self, dir: &path::Path) -> Result<String> {
         let out = self
             .cmd()
             // Looking up git config for a field that is unset
             // will return a non-zero exit code
             // if we don't specify a default value.
-            .args(["config", "--get", "--default=#", "core.commentChar"])
+            .args(["config", "--get", "core.commentString"])
             .current_dir(dir)
             .output()
             .context("Failed to run git config")?;
-        out.status.exit_ok().context("git config failed")?;
+        let output = match out.status.code() {
+            Some(0) => std::str::from_utf8(out.stdout.trim_ascii_end())
+                .context("Output of git config is not valid UTF-8")?
+                .to_string(),
 
-        let output = std::str::from_utf8(out.stdout.trim_ascii_end())
-            .context("Output of git config is not valid UTF-8")?;
+            _ => {
+                // Fall back to core.commentChar if core.commentString is unset.
+                let out = self
+                    .cmd()
+                    // Looking up git config for a field that is unset
+                    // will return a non-zero exit code
+                    // if we don't specify a default value.
+                    .args(["config", "--get", "--default=#", "core.commentChar"])
+                    .current_dir(dir)
+                    .output()
+                    .context("Failed to run git config")?;
+                out.status.exit_ok().context("git config failed")?;
 
-        return match output {
+                std::str::from_utf8(out.stdout.trim_ascii_end())
+                    .context("Output of git config is not valid UTF-8")?
+                    .to_string()
+            },
+        };
+
+        return match output.as_str() {
             // In auto, git will pick an unused character from a pre-defined list.
             // This might be useful to support in the future.
             "auto" => anyhow::bail!(
@@ -132,11 +151,9 @@ impl Git for Shell {
             ),
 
             // Unreachable but easy enough to handle.
-            "" => Ok('#'),
+            "" => Ok("#".to_string()),
 
-            // Git will complain if the value is more than one character
-            // so we don't need to handle that case.
-            _ => Ok(output.chars().next().unwrap()),
+            _ => Ok(output),
         };
     }
 }
@@ -276,9 +293,9 @@ mod tests {
         let fixture = gitscript::open("simple_stack.sh")?;
 
         let shell = Shell::new();
-        let comment_char = shell.comment_char(fixture.dir())?;
+        let comment_char = shell.comment_string(fixture.dir())?;
         assert!(
-            comment_char == '#',
+            comment_char.as_str() == "#",
             "unexpected comment char: '{}'",
             comment_char
         );
@@ -291,11 +308,26 @@ mod tests {
         let fixture = gitscript::open("simple_stack_comment_char.sh")?;
 
         let shell = Shell::new();
-        let comment_char = shell.comment_char(fixture.dir())?;
+        let comment_char = shell.comment_string(fixture.dir())?;
         assert!(
-            comment_char == ';',
+            comment_char.as_str() == ";",
             "unexpected comment char: '{}'",
             comment_char
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn comment_string() -> Result<()> {
+        let fixture = gitscript::open("simple_stack_comment_string.sh")?;
+
+        let shell = Shell::new();
+        let comment_str = shell.comment_string(fixture.dir())?;
+        assert!(
+            comment_str == "#:",
+            "unexpected comment string: '{}'",
+            &comment_str,
         );
 
         Ok(())
@@ -308,7 +340,7 @@ mod tests {
         let shell = Shell::new();
 
         // Should return an error.
-        let err = match shell.comment_char(fixture.dir()) {
+        let err = match shell.comment_string(fixture.dir()) {
             Ok(v) => panic!("expected an error, got {:?}", v),
             Err(err) => err,
         };

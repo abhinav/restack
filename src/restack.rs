@@ -46,12 +46,12 @@ where
         src: I,
         dst: O,
     ) -> Result<()> {
-        let comment_char = match self.git.comment_char(self.cwd) {
+        let comment_str = match self.git.comment_string(self.cwd) {
             Ok(c) => c,
             Err(e) => {
                 eprintln!("WARN: {}", e);
                 eprintln!("WARN: Falling back to `#` as comment character");
-                '#'
+                "#".to_string()
             },
         };
 
@@ -72,7 +72,7 @@ where
         let src = io::BufReader::new(src);
         let mut restack = Restack {
             remote_name,
-            comment_char,
+            comment_str: &comment_str,
             rebase_branch_name: &rebase_branch_name,
             dst: io::BufWriter::new(dst),
             known_branches: &known_branches,
@@ -102,7 +102,7 @@ struct Restack<'a, O: io::Write> {
     rebase_branch_name: &'a str,
 
     /// Character that starts a comment.
-    comment_char: char,
+    comment_str: &'a str,
 
     /// Destination writer.
     dst: io::BufWriter<O>,
@@ -132,7 +132,7 @@ impl<'a, O: io::Write> Restack<'a, O> {
 
         // Comments usually mark the end of instructions.
         // Flush optional "git push" statements.
-        if line.starts_with(self.comment_char) {
+        if line.starts_with(self.comment_str) {
             self.update_previous_branches()?;
             self.write_push_section(false, true)
                 .context("Could not write 'git push' section")?;
@@ -192,13 +192,13 @@ impl<'a, O: io::Write> Restack<'a, O> {
         writeln!(
             self.dst,
             "{} Uncomment this section to push the changes.",
-            self.comment_char
+            self.comment_str
         )?;
         for br in &self.updated_branches {
             writeln!(
                 self.dst,
                 "{} exec git push -f {} {}",
-                self.comment_char, remote_name, br.name
+                self.comment_str, remote_name, br.name
             )?;
         }
         if pad_after {
