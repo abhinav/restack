@@ -15,7 +15,7 @@ build: ## build the binary
 
 .PHONY: test
 test: ## run all tests
-	cargo nextest run --locked --workspace --no-fail-fast $(TEST_ARGS)
+	GIT_CONFIG_GLOBAL= cargo nextest run --locked --workspace --no-fail-fast $(TEST_ARGS)
 
 _COV_FLAGS = --hide-instantiations
 
