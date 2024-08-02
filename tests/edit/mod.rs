@@ -29,6 +29,7 @@ where
 #[case::editor_flag(true, "simple_stack.sh")]
 #[case::editor_env(false, "simple_stack.sh")]
 #[case::comment_char(false, "simple_stack_comment_char.sh")]
+#[case::comment_char(false, "simple_stack_comment_string.sh")]
 fn simple_stack(#[case] editor_flag: bool, #[case] fixture: &str) -> Result<()> {
     let repo_fixture = open_fixture(fixture)?;
 

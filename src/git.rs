@@ -40,8 +40,8 @@ pub trait Git {
         rebase_head_name(&git_dir)
     }
 
-    /// Reports the character used for comments in the repository at the given path.
-    fn comment_char(&self, dir: &path::Path) -> Result<char>;
+    /// Reports the string prefix used for comments in the repository at the given path.
+    fn comment_string(&self, dir: &path::Path) -> Result<String>;
 }
 
 const REBASE_STATE_DIRS: &[&str] = &["rebase-apply", "rebase-merge"];

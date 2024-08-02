@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use std::path;
 
 use anyhow::Result;
@@ -13,6 +11,7 @@ struct StubGit {
     branches: Vec<git::Branch>,
     rebase_head_name: String,
     comment_char: Option<char>,
+    comment_string: Option<String>,
 }
 
 impl git::Git for StubGit {
@@ -36,8 +35,12 @@ impl git::Git for StubGit {
         Ok(self.rebase_head_name.clone())
     }
 
-    fn comment_char(&self, _: &path::Path) -> Result<char> {
-        Ok(self.comment_char.unwrap_or('#'))
+    fn comment_string(&self, _: &path::Path) -> Result<String> {
+        if let Some(s) = &self.comment_string {
+            return Ok(s.to_string());
+        }
+
+        Ok(self.comment_char.unwrap_or('#').to_string())
     }
 }
 
@@ -69,6 +72,7 @@ fn restack_test(test: &TestCase) -> Result<()> {
         branches,
         rebase_head_name: test.rebase_head_name.to_owned(),
         comment_char: test.comment_char,
+        comment_string: None,
     };
 
     let cfg = Config::new(tempdir.path(), stub_git);
