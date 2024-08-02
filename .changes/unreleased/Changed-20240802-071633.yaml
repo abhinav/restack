@@ -1,0 +1,3 @@
+kind: Changed
+body: 'linux-arm64: Binary is no longer statically linked.'
+time: 2024-08-02T07:16:33.678855-07:00
