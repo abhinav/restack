@@ -61,12 +61,17 @@ jobs:
         echo "value=$(cat rust-toolchain)" >> "$GITHUB_OUTPUT"
 
     - name: Setup Rust
-      uses: dtolnay/rust-toolchain@v1
-      with:
-        targets: ${{ matrix.target }}
-        components: rust-src
-        toolchain: ${{ steps.rust-toolchain.outputs.value }}
+      run: |
+        if ! command -v rustup &>/dev/null; then
+          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
+          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+        fi
 
+        rustup toolchain install ${{ steps.rust-toolchain.outputs.value }} \
+          --target ${{ matrix.target }} \
+          --component rust-src \
+          --profile minimal \
+          --no-self-update
     - uses: Swatinem/rust-cache@v2
 
     - name: Install extra packages
