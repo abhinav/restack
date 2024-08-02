@@ -1,6 +1,6 @@
 [package]
 name = "restack"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
 description = "Teaches git rebase --interactive about your branches."
 homepage = "https://github.com/abhinav/restack"
