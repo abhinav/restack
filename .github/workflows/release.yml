@@ -87,7 +87,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.linker != '' }}
       run: |
         mkdir -p .cargo
-        cat > .cargo/config <<EOF
+        cat > .cargo/config.toml <<EOF
         [target.${{ matrix.target }}]
         linker = "${{ matrix.linker }}"
         EOF
