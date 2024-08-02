@@ -243,9 +243,10 @@ jobs:
     - name: Release Cargo crate
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: |
+        perl -p -i -e "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
         cargo login ${{ secrets.CARGO_TOKEN }}
         echo ::group::Publishing files
-        cargo packge --list
+        cargo package --list
         echo ::endgroup::
         cargo publish
 
