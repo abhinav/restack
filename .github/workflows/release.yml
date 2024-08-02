@@ -29,7 +29,6 @@ jobs:
           - slug: linux-arm64
             target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            linker: aarch64-linux-musl-gcc
             musl-cross: aarch64-linux-musl-cross
             strip: aarch64-linux-musl-strip
             no-build-std: true
@@ -37,7 +36,6 @@ jobs:
           - slug: linux-armv7
             target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            linker: armv7l-linux-musleabihf-gcc
             musl-cross: armv7l-linux-musleabihf-cross
             strip: armv7l-linux-musleabihf-strip
             no-build-std: true
@@ -49,6 +47,10 @@ jobs:
           - slug: darwin-arm64
             target: aarch64-apple-darwin
             os: macos-latest
+
+    env:
+      CARGO: cargo
+      CROSS_VERSION: v0.2.5
 
     steps:
 
@@ -80,27 +82,21 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ${{ matrix.extra_pkgs }}
 
-    - name: Install musl cross-compilation toolchain
+    - name: Install Cross
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.musl-cross != '' }}
       run: |
-        mkdir -p "$HOME/.local"
-        curl -o /tmp/musl.tgz https://musl.cc/${{ matrix.musl-cross }}.tgz
-        tar -xzf /tmp/musl.tgz -C "$HOME/.local"
-        echo "$HOME/.local/${{ matrix.musl-cross }}/bin" >> "$GITHUB_PATH"
-
-    - name: Configure linker
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.linker != '' }}
-      run: |
-        mkdir -p .cargo
-        cat > .cargo/config.toml <<EOF
-        [target.${{ matrix.target }}]
-        linker = "${{ matrix.linker }}"
-        EOF
+        dir="$RUNNER_TEMP/cross-download"
+        mkdir "$dir"
+        echo "$dir" >> "$GITHUB_PATH"
+        cd "$dir"
+        curl -LO "https://github.com/cross-rs/cross/releases/download/$CROSS_VERSION/cross-x86_64-unknown-linux-musl.tar.gz"
+        tar xf cross-x86_64-unknown-linux-musl.tar.gz
+        echo "CARGO=cross" >> "$GITHUB_ENV"
 
     - name: Build (build-std)
       if: ${{ !matrix.no-build-std }}
       run: |
-        cargo build \
+        ${{ env.CARGO }} build \
           --target ${{ matrix.target }} \
           --locked \
           --release \
@@ -110,18 +106,29 @@ jobs:
     - name: Build (no-build-std)
       if: ${{ matrix.no-build-std }}
       run: |
-        cargo build \
+        ${{ env.CARGO }} build \
           --target ${{ matrix.target }} \
           --locked \
           --release
 
-    - name: Strip binary
+    - name: Strip release binary (macos)
+      if: matrix.os == 'macos-latest'
       run: |
         strip=${{ matrix.strip || 'strip' }}
         exe=target/${{ matrix.target }}/release/restack
         echo "Before: $(wc -c < "$exe") bytes"
         "$strip" target/${{ matrix.target }}/release/restack
         echo "After: $(wc -c < "$exe") bytes"
+
+    - name: Strip release binary (cross)
+      if: env.CARGO == 'cross'
+      shell: bash
+      run: |
+        docker run --rm -v \
+          "$PWD/target:/target:Z" \
+          "ghcr.io/cross-rs/${{ matrix.target }}:main" \
+          "${{ matrix.strip }}" \
+          "/$BIN"
 
     - name: Prepare archive
       run: |
