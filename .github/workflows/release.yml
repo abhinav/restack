@@ -24,19 +24,17 @@ jobs:
           - slug: linux-amd64
             target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            extra_pkgs: musl-tools
+            strip: x86_64-linux-musl-strip
 
           - slug: linux-arm64
-            target: aarch64-unknown-linux-musl
+            target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            musl-cross: aarch64-linux-musl-cross
-            strip: aarch64-linux-musl-strip
+            strip: aarch64-linux-gnu-strip
             no-build-std: true
 
           - slug: linux-armv7
             target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            musl-cross: armv7l-linux-musleabihf-cross
             strip: armv7l-linux-musleabihf-strip
             no-build-std: true
 
@@ -76,14 +74,8 @@ jobs:
           --no-self-update
     - uses: Swatinem/rust-cache@v2
 
-    - name: Install extra packages
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.extra_pkgs != '' }}
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.extra_pkgs }}
-
     - name: Install Cross
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.musl-cross != '' }}
+      if: matrix.os == 'ubuntu-latest' && matrix.target != ''
       run: |
         dir="$RUNNER_TEMP/cross-download"
         mkdir "$dir"
@@ -139,7 +131,7 @@ jobs:
     - name: Upload archive
       uses: actions/upload-artifact@v4
       with:
-        name: restack-archive
+        name: restack-${{ matrix.slug }}
         path: restack-*.tar.gz
 
   release:
@@ -176,7 +168,9 @@ jobs:
     - name: Download archives
       uses: actions/download-artifact@v4
       with:
-        name: restack-archive
+        path: .
+        pattern: restack-*
+        merge-multiple: true
 
     - name: Determine version number (push)
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
