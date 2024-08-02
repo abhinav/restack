@@ -35,7 +35,7 @@ jobs:
           - slug: linux-armv7
             target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            strip: armv7l-linux-musleabihf-strip
+            strip: arm-linux-musleabihf-strip
             no-build-std: true
 
           # macOS
@@ -120,7 +120,7 @@ jobs:
           "$PWD/target:/target:Z" \
           "ghcr.io/cross-rs/${{ matrix.target }}:main" \
           "${{ matrix.strip }}" \
-          "/$BIN"
+          "/target/${{ matrix.target }}/release/restack"
 
     - name: Prepare archive
       run: |
