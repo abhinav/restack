@@ -229,7 +229,7 @@ jobs:
         COMMIT_EMAIL: ${{ secrets.AUR_EMAIL }}
 
     - name: Publish AUR package (binary)
-      uses: KSXGitHub/github-actions-deploy-aur@v3.0.0
+      uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       with:
         pkgname: restack-bin
@@ -252,7 +252,7 @@ jobs:
 
     - name: Publish AUR package (source)
       if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      uses: KSXGitHub/github-actions-deploy-aur@v3.0.0
+      uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
       with:
         pkgname: restack
         pkgbuild: ./target/aur/PKGBUILD
