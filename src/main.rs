@@ -14,7 +14,6 @@
 
 #![warn(missing_docs)]
 #![feature(exit_status_error)]
-#![feature(io_error_more)]
 
 use anyhow::{anyhow, bail, Result};
 
