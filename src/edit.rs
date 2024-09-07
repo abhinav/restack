@@ -5,6 +5,7 @@ use std::{env, fs, path, process};
 
 use anyhow::{anyhow, bail, Context, Result};
 
+use crate::exec::ExitStatusExt;
 use crate::{git, restack};
 
 const USAGE: &str = "\

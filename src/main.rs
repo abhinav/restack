@@ -13,11 +13,11 @@
 //! [2]: https://abhinavg.net/posts/restacking-branches/
 
 #![warn(missing_docs)]
-#![feature(exit_status_error)]
 
 use anyhow::{anyhow, bail, Result};
 
 mod edit;
+mod exec;
 mod git;
 mod io;
 mod restack;
