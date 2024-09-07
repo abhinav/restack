@@ -30,13 +30,11 @@ jobs:
             target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             strip: aarch64-linux-gnu-strip
-            no-build-std: true
 
           - slug: linux-armv7
             target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
             strip: arm-linux-musleabihf-strip
-            no-build-std: true
 
           # macOS
           - slug: darwin-amd64
@@ -85,18 +83,7 @@ jobs:
         tar xf cross-x86_64-unknown-linux-musl.tar.gz
         echo "CARGO=cross" >> "$GITHUB_ENV"
 
-    - name: Build (build-std)
-      if: ${{ !matrix.no-build-std }}
-      run: |
-        ${{ env.CARGO }} build \
-          --target ${{ matrix.target }} \
-          --locked \
-          --release \
-          -Z build-std=std,panic_abort \
-          -Z build-std-features=panic_immediate_abort
-
-    - name: Build (no-build-std)
-      if: ${{ matrix.no-build-std }}
+    - name: Build
       run: |
         ${{ env.CARGO }} build \
           --target ${{ matrix.target }} \

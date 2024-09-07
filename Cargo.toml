@@ -29,8 +29,6 @@ rstest = "0.22.0"
 
 [profile.release]
 lto = true
-panic = "abort"
-opt-level = "z"
 
 [workspace]
 members = [".", "./tools/test"]
