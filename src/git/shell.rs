@@ -6,6 +6,7 @@ use std::{ffi, path, process};
 use anyhow::{Context, Result};
 
 use super::{Branch, Git};
+use crate::exec::ExitStatusExt;
 
 /// Shell provides access to the git CLI.
 pub struct Shell {}
