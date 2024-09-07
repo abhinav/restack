@@ -8,6 +8,8 @@ pub fn rename(src: &path::Path, dst: &path::Path) -> Result<()> {
     rename_impl(|src, dst| fs::rename(src, dst), src, dst)
 }
 
+const EXDEV: i32 = 18;
+
 fn rename_impl<RenameFn>(fs_rename: RenameFn, src: &path::Path, dst: &path::Path) -> Result<()>
 where
     RenameFn: Fn(&path::Path, &path::Path) -> io::Result<()>,
@@ -23,7 +25,7 @@ where
             // deleting the temporary file.
             //
             // This is not the default because move is atomic.
-            if err.kind() == io::ErrorKind::CrossesDevices {
+            if err.raw_os_error() == Some(EXDEV) {
                 unsafe_rename(src, dst)
             } else {
                 Err(anyhow::Error::new(err))
@@ -83,6 +85,6 @@ mod tests {
     }
 
     fn cross_device_fail(from: &path::Path, to: &path::Path) -> Result<()> {
-        rename_impl(|_, _| Err(io::Error::from_raw_os_error(18)), from, to)
+        rename_impl(|_, _| Err(io::Error::from_raw_os_error(EXDEV)), from, to)
     }
 }
