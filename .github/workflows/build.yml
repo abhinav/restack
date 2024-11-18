@@ -47,6 +47,6 @@ jobs:
       run: make cover
 
     - name: Upload coverage data
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         files: lcov.info
