@@ -1,7 +1,7 @@
 [package]
 name = "restack"
 version = "0.8.0"
-edition = "2021"
+edition = "2024"
 description = "Teaches git rebase --interactive about your branches."
 homepage = "https://github.com/abhinav/restack"
 documentation = "https://github.com/abhinav/restack/blob/main/README.md"

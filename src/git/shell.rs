@@ -142,7 +142,7 @@ impl Git for Shell {
             },
         };
 
-        return match output.as_str() {
+        match output.as_str() {
             // In auto, git will pick an unused character from a pre-defined list.
             // This might be useful to support in the future.
             "auto" => anyhow::bail!(
@@ -155,7 +155,7 @@ impl Git for Shell {
             "" => Ok("#".to_string()),
 
             _ => Ok(output),
-        };
+        }
     }
 }
 
@@ -203,10 +203,12 @@ mod tests {
         // This is hacky but it's the only way to prevent
         // any other environment variables from leaking
         // into the Git subprocess
-        std::env::vars().for_each(|(k, _)| {
-            std::env::remove_var(k);
-        });
-        std::env::set_var("HOME", home);
+        unsafe {
+            std::env::vars().for_each(|(k, _)| {
+                std::env::remove_var(k);
+            });
+            std::env::set_var("HOME", home);
+        }
 
         let shell = Shell::new();
         shell.set_global_config_str("user.name", "Test User")?;

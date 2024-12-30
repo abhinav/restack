@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 use std::{env, fs, path, process};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 
 use crate::exec::ExitStatusExt;
 use crate::{git, restack};

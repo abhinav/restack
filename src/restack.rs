@@ -115,7 +115,7 @@ struct Restack<'a, O: io::Write> {
     wrote_push: bool,
 }
 
-impl<'a, O: io::Write> Restack<'a, O> {
+impl<O: io::Write> Restack<'_, O> {
     pub fn process(&mut self, line: &str) -> Result<()> {
         if line.is_empty() {
             // Empty lines delineate sections.

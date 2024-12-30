@@ -4,7 +4,7 @@
 use std::io::{self, Read};
 use std::{ffi, fs, path};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 mod shell;
 
