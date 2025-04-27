@@ -69,7 +69,7 @@ pub struct Fixture<'a> {
     version: Cow<'a, str>,
 }
 
-impl<'a> Debug for Fixture<'a> {
+impl Debug for Fixture<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Fixture")
             .field("tempdir", &self.tempdir.path())

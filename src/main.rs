@@ -14,7 +14,7 @@
 
 #![warn(missing_docs)]
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 
 mod edit;
 mod exec;
