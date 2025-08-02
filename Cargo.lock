@@ -101,6 +101,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "duct"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6ce170a0e8454fa0f9b0e5ca38a6ba17ed76a50916839d217eb5357e05cdfde"
+dependencies = [
+ "libc",
+ "os_pipe",
+ "shared_child",
+ "shared_thread",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -415,7 +427,7 @@ name = "restack"
 version = "0.8.0"
 dependencies = [
  "anyhow",
- "duct",
+ "duct 1.0.0",
  "indoc",
  "lazy_static",
  "lexopt",
@@ -430,7 +442,7 @@ name = "restack-testtools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "duct",
+ "duct 0.13.7",
  "file-lock",
  "lazy_static",
  "sha2",
@@ -442,21 +454,20 @@ dependencies = [
 
 [[package]]
 name = "rstest"
-version = "0.25.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fc39292f8613e913f7df8fa892b8944ceb47c247b78e1b1ae2f09e019be789d"
+checksum = "f5a3193c063baaa2a95a33f03035c8a72b83d97a54916055ba22d35ed3839d49"
 dependencies = [
  "futures-timer",
  "futures-util",
  "rstest_macros",
- "rustc_version",
 ]
 
 [[package]]
 name = "rstest_macros"
-version = "0.25.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f168d99749d307be9de54d23fd226628d99768225ef08f6ffb52e0182a27746"
+checksum = "9c845311f0ff7951c5506121a9ad75aec44d083c31583b2ea5a30bcb0b0abba0"
 dependencies = [
  "cfg-if",
  "glob",
@@ -518,6 +529,12 @@ dependencies = [
  "libc",
  "windows-sys",
 ]
+
+[[package]]
+name = "shared_thread"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7a6f98357c6bb0ebace19b22220e5543801d9de90ffe77f8abb27c056bac064"
 
 [[package]]
 name = "shlex"
