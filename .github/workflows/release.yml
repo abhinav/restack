@@ -51,7 +51,7 @@ jobs:
     steps:
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Determine toolchain
       id: rust-toolchain
@@ -133,7 +133,7 @@ jobs:
         tool: parse-changelog@0.5.1
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Determine toolchain
       id: rust-toolchain
@@ -141,7 +141,7 @@ jobs:
         echo "value=$(cat rust-toolchain)" >> "$GITHUB_OUTPUT"
 
     - name: Checkout Homebrew tap
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: abhinav/homebrew-tap
         token: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
