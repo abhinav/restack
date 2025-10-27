@@ -116,7 +116,7 @@ jobs:
              restack
 
     - name: Upload archive
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: restack-${{ matrix.slug }}
         path: restack-*.tar.gz
@@ -153,7 +153,7 @@ jobs:
         toolchain: ${{ steps.rust-toolchain.outputs.value }}
 
     - name: Download archives
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         path: .
         pattern: restack-*
