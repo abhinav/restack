@@ -3,13 +3,6 @@
 editor=$(git var GIT_EDITOR)
 restack=$(command -v restack || echo "")
 
-# $GOPATH/bin is not on $PATH but restack is installed.
-if [ -z "$restack" ]; then
-	if [ -n "$GOPATH" ] && [ -x "$GOPATH/bin/restack" ]; then
-		restack="$GOPATH/bin/restack"
-	fi
-fi
-
 if [ -n "$restack" ]; then
 	"$restack" edit --editor="$editor" "$@"
 else
