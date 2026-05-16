@@ -1,3 +1,28 @@
+This project has been archived.
+The functionality offered by it has been available
+natively in Git since version 2.38.
+
+To use it:
+
+```bash
+git config --global rebase.updateRefs true
+```
+
+To use it one-off:
+
+```bash
+git rebase -i --update-refs # ...
+```
+
+Further reading:
+
+- [Git 2.38 Release Notes](https://github.com/git/git/blob/master/Documentation/RelNotes/2.38.0.adoc)
+- [GitHub Blog > Highlights from Git 2.38](https://github.blog/open-source/git/highlights-from-git-2-38/#rebase-dependent-branches-with-update-refs)
+
+Original README for the project follows.
+
+---
+
 # 📚 restack [![CI](https://github.com/abhinav/restack/actions/workflows/build.yml/badge.svg)](https://github.com/abhinav/restack/actions/workflows/build.yml) [![Crate](https://img.shields.io/crates/v/restack.svg)](https://crates.io/crates/restack) [![codecov](https://codecov.io/gh/abhinav/restack/branch/main/graph/badge.svg)](https://codecov.io/gh/abhinav/restack/tree/main)
 
 restack augments the experience of performing an interactive Git rebase to make
